@@ -21,6 +21,7 @@ export default defineConfig(({ command, mode, isPreview }) => {
   }
 
   return {
+    base: '/roadsense/',
     plugins: [react()],
     optimizeDeps: {
       // MapLibre's worker is resolved from its package URL. Vite's dependency
@@ -33,11 +34,11 @@ export default defineConfig(({ command, mode, isPreview }) => {
       proxy:
         usesDevProxy && proxyTarget
           ? {
-              '/api': {
-                target: proxyTarget,
-                changeOrigin: true,
-              },
-            }
+            '/api': {
+              target: proxyTarget,
+              changeOrigin: true,
+            },
+          }
           : undefined,
     },
     preview: {
