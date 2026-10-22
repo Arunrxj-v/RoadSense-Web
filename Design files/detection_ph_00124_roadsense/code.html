@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-container-highest":"#e3e2df","on-tertiary-container":"#eb6232","on-secondary-fixed-variant":"#3d4856","error":"#ba1a1a","primary":"#09111b","surface-container":"#efeeea","on-tertiary-fixed":"#390b00","on-error-container":"#93000a","surface-container-low":"#f5f4f0","error-container":"#ffdad6","on-background":"#1b1c1a","surface-container-high":"#e9e8e4","surface-dim":"#dbdad6","on-secondary":"#ffffff","background":"#faf9f5","on-surface-variant":"#44474b","secondary-fixed":"#d8e3f5","primary-fixed-dim":"#bfc7d6","tertiary":"#270500","inverse-on-surface":"#f2f1ed","outline-variant":"#c5c6cc","on-error":"#ffffff","secondary-container":"#d8e3f5","secondary":"#545f6e","on-primary-fixed-variant":"#3f4753","surface-container-lowest":"#ffffff","primary-fixed":"#dbe3f2","on-primary-fixed":"#141c27","on-secondary-fixed":"#111c29","on-primary-container":"#858d9b","on-primary":"#ffffff","on-tertiary-fixed-variant":"#842500","tertiary-container":"#4b1100","tertiary-fixed":"#ffdbd0","on-tertiary":"#ffffff","outline":"#75777c","inverse-primary":"#bfc7d6","on-secondary-container":"#5a6574","surface-bright":"#faf9f5","surface-variant":"#e3e2df","on-surface":"#1b1c1a","primary-container":"#1e2631","surface":"#faf9f5","tertiary-fixed-dim":"#ffb59d","secondary-fixed-dim":"#bcc7d9","surface-tint":"#575f6c","inverse-surface":"#30312e"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter-desktop":"2rem","space-sm":"0.5rem","margin-tablet":"1.5rem","margin-desktop":"2.5rem","gutter-tablet":"1.5rem","space-md":"0.75rem","space-xl":"2rem","gutter":"1rem","margin":"1rem","space-xs":"0.25rem","space-lg":"1.25rem"},"fontFamily":{"body-sm":["Public Sans"],"headline-lg-mobile":["Public Sans"],"headline-xl":["Public Sans"],"label-lg":["JetBrains Mono"],"headline-lg":["Public Sans"],"headline-xl-mobile":["Public Sans"],"headline-sm":["Public Sans"],"label-md":["JetBrains Mono"],"body-lg":["Public Sans"],"body-md":["Public Sans"],"label-sm":["JetBrains Mono"]},"fontSize":{"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"headline-lg-mobile":["22px",{"lineHeight":"28px","fontWeight":"600"}],"headline-xl":["36px",{"lineHeight":"44px","fontWeight":"600"}],"label-lg":["13px",{"lineHeight":"18px","fontWeight":"500"}],"headline-lg":["26px",{"lineHeight":"34px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","fontWeight":"600"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","fontWeight":"500"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"label-sm":["10px",{"lineHeight":"14px","fontWeight":"500"}]}}}}</script></head><body class="bg-background text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col justify-between"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-surface-container-highest"><div class="h-14 w-full px-gutter-desktop flex items-center justify-between"><div class="flex items-center gap-space-md"><a class="flex items-baseline gap-space-xs" data-path="map" href="#"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-semibold">RoadSense</span><span class="inline-block w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span></a><span class="text-outline-variant font-body-sm text-body-sm select-none">/</span><span class="font-label-md text-label-md text-secondary tracking-normal">Road condition map</span></div><nav class="flex items-center gap-space-xl" data-active-classes="text-primary font-semibold"><a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" data-path="map" href="#">Map</a><a aria-current="page" class="transition-colors text-primary font-semibold" data-path="detections" href="#">Detections</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" data-path="about" href="#">About</a></nav><div class="flex items-center"><div class="inline-flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container-low rounded-lg"><span class="inline-block w-1.5 h-1.5 rounded-full bg-secondary-fixed-variant"></span><span class="font-label-sm text-label-sm text-secondary">Updated 3 min ago</span></div></div></div></header><main class="w-full pt-14 flex-1 bg-surface"><div class="flex flex-col w-full">
+<!-- Content Area -->
+<div class="w-full max-w-7xl mx-auto px-gutter-desktop py-space-xl">
+<!-- Top Action Breadcrumb Bar -->
+<div class="flex flex-wrap items-center justify-between gap-space-md mb-space-lg">
+<a class="group inline-flex items-center gap-space-xs text-on-surface-variant hover:text-primary transition-colors" data-path="map" href="#">
+<span class="material-symbols-outlined text-[18px] transition-transform group-hover:-translate-x-0.5">arrow_back</span>
+<span class="font-body-md text-body-md font-medium">Back to Map</span>
+</a>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-md text-label-md uppercase tracking-wider text-secondary px-space-sm py-space-xs bg-surface-container-low rounded-lg">
+          Detection ID: <span class="text-primary font-semibold">PH-00124</span>
+</span>
+<div class="h-2 w-2 rounded-full bg-on-tertiary-container" title="Active Record"></div>
+</div>
+</div>
+<!-- Main Title & Primary Telemetry Ribbon -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm mb-space-xl">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-space-md pb-space-lg border-b border-surface-container-highest">
+<div>
+<div class="inline-flex items-center gap-space-xs mb-space-xs">
+<span class="inline-block w-2 h-2 rounded-full bg-on-tertiary-container"></span>
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-on-tertiary-container font-semibold">Pothole Detected</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-primary tracking-tight">Chinnakkada, Kollam</h1>
+<p class="font-body-md text-body-md text-secondary mt-space-xs">MC Road (SH 1) corridor segment · Urban Transit Arterial</p>
+</div>
+<div class="flex flex-wrap items-center gap-space-sm self-start">
+<div class="px-space-md py-space-sm bg-surface-container-low rounded-lg">
+<span class="block font-label-sm text-label-sm text-secondary uppercase">Confidence Score</span>
+<span class="font-label-lg text-label-lg font-bold text-primary">94% <span class="font-body-sm text-body-sm text-secondary font-normal">(Verified Algorithmic)</span></span>
+</div>
+<div class="px-space-md py-space-sm bg-surface-container-low rounded-lg">
+<span class="block font-label-sm text-label-sm text-secondary uppercase">Public Audit Status</span>
+<span class="inline-flex items-center gap-1.5 font-label-lg text-label-lg font-semibold text-primary">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified</span> Public Record
+            </span>
+</div>
+</div>
+</div>
+<!-- Quick Telemetry Stats Strip -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-md pt-space-lg">
+<div>
+<span class="font-label-sm text-label-sm uppercase text-secondary">Logged Timestamp</span>
+<p class="font-body-md text-body-md font-medium text-primary mt-0.5">18 Oct 2026, 10:42 AM IST</p>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase text-secondary">Sensor Node Run</span>
+<p class="font-label-md text-label-md text-primary mt-0.5">SWEEP-KL-KLM-04</p>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase text-secondary">Severity Profile</span>
+<p class="font-body-md text-body-md font-medium text-primary mt-0.5">Medium Discontinuity</p>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase text-secondary">Surface Friction Est.</span>
+<p class="font-label-md text-label-md text-primary mt-0.5">0.42 μ (Degraded)</p>
+</div>
+</div>
+</div>
+<!-- Core Information Grid: Specifications & Cartographic Snippet -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl mb-space-xl">
+<!-- Specifications Column -->
+<div class="lg:col-span-6 flex flex-col gap-space-lg">
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between flex-1">
+<div>
+<div class="flex items-center justify-between pb-space-md border-b border-surface-container-highest mb-space-md">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Cadastral &amp; Spatial Metadata</span>
+<span class="font-label-sm text-label-sm text-secondary">WGS84 Datum</span>
+</div>
+<dl class="space-y-space-md">
+<div class="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-surface-container-low">
+<dt class="font-body-md text-body-md text-secondary">Corridor Classification</dt>
+<dd class="font-body-md text-body-md font-medium text-primary text-right">Major District Road / State Highway 1</dd>
+</div>
+<div class="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-surface-container-low">
+<dt class="font-body-md text-body-md text-secondary">Specific Segment</dt>
+<dd class="font-body-md text-body-md font-medium text-primary text-right">MC Road / Chinnakkada Junction</dd>
+</div>
+<div class="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-surface-container-low">
+<dt class="font-body-md text-body-md text-secondary">Postal Index Code</dt>
+<dd class="font-label-md text-label-md text-primary text-right">691001 (Kollam Head PO)</dd>
+</div>
+<div class="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-surface-container-low">
+<dt class="font-body-md text-body-md text-secondary">Jurisdictional Authority</dt>
+<dd class="font-body-md text-body-md font-medium text-primary text-right">Kerala PWD (Roads Division, Kollam)</dd>
+</div>
+<div class="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-surface-container-low">
+<dt class="font-body-md text-body-md text-secondary">Nearest Physical Landmark</dt>
+<dd class="font-body-md text-body-md font-medium text-primary text-right">Near Chinnakkada Clock Tower Roundabout</dd>
+</div>
+<div class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center py-2">
+<dt class="font-body-md text-body-md text-secondary">Geographic Coordinates</dt>
+<dd class="font-label-md text-label-md text-primary mt-1 sm:mt-0 flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1 rounded">
+<span id="coord-text">8.893214, 76.614102</span>
+<button class="text-secondary hover:text-primary transition-colors ml-1 p-0.5 rounded" id="copy-btn" onclick="copyCoords()" title="Copy to clipboard" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</dd>
+</div>
+</dl>
+</div>
+<!-- Audit Verification Notice inside block -->
+<div class="mt-space-lg p-space-md bg-surface-container-low rounded-lg flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[20px] mt-0.5">policy</span>
+<div class="space-y-0.5">
+<span class="font-label-sm text-label-sm uppercase text-secondary font-semibold">Verification Digest</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant m-0">Triangulated using multi-axis spatial telemetry and optical cadence validation. Detection ID registered under State Road Asset registry.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Embedded Clean Map Snippet Column -->
+<div class="lg:col-span-6 flex flex-col">
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col h-full">
+<div class="flex items-center justify-between pb-space-md border-b border-surface-container-highest mb-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[18px]">pin_drop</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Micro-Location Inset</span>
+</div>
+<a class="inline-flex items-center gap-space-xs text-secondary hover:text-primary transition-colors font-label-sm text-label-sm" href="https://maps.google.com/?q=8.893214,76.614102" rel="noopener noreferrer" target="_blank">
+<span>Open in Google Maps</span>
+<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</div>
+<!-- Map Container with Data-Location Pipeline -->
+<div class="relative w-full flex-1 min-h-[340px] rounded-lg overflow-hidden bg-surface-container">
+<div class="w-full h-full bg-cover bg-center absolute inset-0" data-location="Chinnakkada, Kollam, Kerala, India" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBSWZrj8ngcDewrBW8MJX6V4kD-_i3UUXwEg3QZzmB8GPU_mGIoxZ9o2WVQqSIIsX1B0WDLuLeHGg1FXjdnQeAY0IeHBxLoaJ4PoFkYEwJ4DcfL0SomL7rMcu2dtKqQEMEx_yKjGTN6eUdoUsxMJJZXWtsQQvgOEfMmzmSAXhhpRDrFgiZnMw-iRZfneIFze5dwvC76eAm9RarZ2acU1G7ujp9J054u3-2SswVy4nkzixQRVVDbLw-wEA')"></div>
+<!-- Stylized Civic Map Reticle / Pin Overlay -->
+<div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+<div class="relative flex items-center justify-center">
+<!-- Concentric static warning pulse ring -->
+<div class="w-12 h-12 rounded-full border border-on-tertiary-container opacity-40"></div>
+<div class="w-7 h-7 rounded-full bg-on-tertiary-container/15 flex items-center justify-center absolute">
+<div class="w-3.5 h-3.5 rounded-full bg-on-tertiary-container ring-2 ring-surface-container-lowest shadow-sm"></div>
+</div>
+</div>
+</div>
+<!-- Cartographic Floating Badge -->
+<div class="absolute bottom-3 left-3 bg-surface-container-lowest/95 px-space-sm py-space-xs rounded shadow-sm text-on-surface pointer-events-auto">
+<span class="font-label-sm text-label-sm block text-primary font-semibold">8.893214° N, 76.614102° E</span>
+<span class="font-label-sm text-label-sm text-secondary">MC Road (SH 1) / Chinnakkada</span>
+</div>
+<!-- Precision Crosshair Markers -->
+<div class="absolute top-3 right-3 bg-surface-container-lowest/90 px-space-xs py-0.5 rounded text-secondary font-label-sm text-label-sm">
+              ZOOM 18x · HIGHWAY INSET
+            </div>
+</div>
+<div class="flex items-center justify-between pt-space-md text-secondary font-body-sm text-body-sm">
+<span>Projection: EPSG:4326</span>
+<span>Survey Accuracy: ±0.8m</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Nearby Detections Along Corridor Section (Strictly Text / Metadata, No Images) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm mb-space-xl">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-space-md border-b border-surface-container-highest gap-space-xs mb-space-md">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary">Other Detections Along MC Road Corridor</h2>
+<p class="font-body-sm text-body-sm text-secondary">Sequential automated reports captured during recent vehicular traverses on SH 1</p>
+</div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary bg-surface-container-low px-space-sm py-1 rounded">2 Related Records</span>
+</div>
+<div class="divide-y divide-surface-container-highest">
+<!-- Related Item 1 -->
+<div class="py-space-md flex flex-col md:flex-row md:items-center justify-between gap-space-md hover:bg-surface-container-low/50 px-space-sm rounded transition-colors">
+<div class="flex items-start gap-space-md">
+<div class="mt-1 flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container-low text-on-tertiary-container shrink-0">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="font-body-md text-body-md font-semibold text-primary">Pothole detected</span>
+<span class="inline-block w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-body-sm text-body-sm text-secondary font-medium">140m north towards Asramam</span>
+</div>
+<p class="font-label-sm text-label-sm text-secondary mt-0.5">MC Road, near Sub-Registrar Office · Recorded 18 Oct 2026, 09:15 AM</p>
+</div>
+</div>
+<div class="flex items-center gap-space-lg self-end md:self-center shrink-0">
+<div class="text-right">
+<span class="block font-label-sm text-label-sm uppercase text-secondary">Confidence</span>
+<span class="font-label-md text-label-md font-semibold text-primary">91%</span>
+</div>
+<a class="px-space-md py-space-xs bg-surface-container-low hover:bg-surface-container hover:text-primary text-secondary rounded-lg font-body-sm text-body-sm transition-colors" href="#">
+              Inspect #PH-00122
+            </a>
+</div>
+</div>
+<!-- Related Item 2 -->
+<div class="py-space-md flex flex-col md:flex-row md:items-center justify-between gap-space-md hover:bg-surface-container-low/50 px-space-sm rounded transition-colors">
+<div class="flex items-start gap-space-md">
+<div class="mt-1 flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container-low text-on-tertiary-container shrink-0">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm flex-wrap">
+<span class="font-body-md text-body-md font-semibold text-primary">Pothole detected</span>
+<span class="inline-block w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-body-sm text-body-sm text-secondary font-medium">380m south towards Beach Road</span>
+</div>
+<p class="font-label-sm text-label-sm text-secondary mt-0.5">Chinnakkada Underpass Link · Recorded 17 Oct 2026, 04:20 PM</p>
+</div>
+</div>
+<div class="flex items-center gap-space-lg self-end md:self-center shrink-0">
+<div class="text-right">
+<span class="block font-label-sm text-label-sm uppercase text-secondary">Confidence</span>
+<span class="font-label-md text-label-md font-semibold text-primary">88%</span>
+</div>
+<a class="px-space-md py-space-xs bg-surface-container-low hover:bg-surface-container hover:text-primary text-secondary rounded-lg font-body-sm text-body-sm transition-colors" href="#">
+              Inspect #PH-00119
+            </a>
+</div>
+</div>
+</div>
+</div>
+<!-- Discreet Civic Disclaimer Notice -->
+<div class="p-space-lg bg-surface-container-low rounded-xl flex items-start gap-space-md">
+<span class="material-symbols-outlined text-secondary text-[22px] shrink-0 mt-0.5">info</span>
+<div class="space-y-1">
+<h3 class="font-body-md text-body-md font-semibold text-primary m-0">Public Transit &amp; Sensing Notice</h3>
+<p class="font-body-sm text-body-sm text-secondary leading-relaxed m-0">
+          RoadSense records automated detections from mobile sensing sweeps. Observations represent conditions at the time of transit. Civic agencies, local transport authorities, and road users should consider road conditions variable according to weather, ongoing maintenance, and vehicular wear.
+        </p>
+</div>
+</div>
+</div>
+<script>
+    function copyCoords() {
+      const text = document.getElementById('coord-text').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<span class="material-symbols-outlined text-[16px] text-primary">check</span>';
+        setTimeout(() => {
+          btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">content_copy</span>';
+        }, 1800);
+      });
+    }
+  </script>
+</div></main><footer class="w-full bg-surface-container-lowest border-t border-surface-container-highest py-space-md"><div class="w-full px-gutter-desktop flex flex-col sm:flex-row items-center justify-between gap-space-sm"><p class="font-body-sm text-body-sm text-secondary m-0">RoadSense displays automated road condition observations. Roads without markers may not have been recently surveyed.</p><div class="flex items-center gap-space-lg shrink-0"><a class="font-body-sm text-body-sm text-secondary hover:text-primary transition-colors" data-path="public-data-note" href="#">Public Data Note</a><a class="font-body-sm text-body-sm text-secondary hover:text-primary transition-colors" data-path="about" href="#">About</a></div></div></footer></body></html>

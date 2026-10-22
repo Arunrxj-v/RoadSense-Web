@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-container-highest":"#e3e2df","on-tertiary-container":"#eb6232","on-secondary-fixed-variant":"#3d4856","error":"#ba1a1a","primary":"#09111b","surface-container":"#efeeea","on-tertiary-fixed":"#390b00","on-error-container":"#93000a","surface-container-low":"#f5f4f0","error-container":"#ffdad6","on-background":"#1b1c1a","surface-container-high":"#e9e8e4","surface-dim":"#dbdad6","on-secondary":"#ffffff","background":"#faf9f5","on-surface-variant":"#44474b","secondary-fixed":"#d8e3f5","primary-fixed-dim":"#bfc7d6","tertiary":"#270500","inverse-on-surface":"#f2f1ed","outline-variant":"#c5c6cc","on-error":"#ffffff","secondary-container":"#d8e3f5","secondary":"#545f6e","on-primary-fixed-variant":"#3f4753","surface-container-lowest":"#ffffff","primary-fixed":"#dbe3f2","on-primary-fixed":"#141c27","on-secondary-fixed":"#111c29","on-primary-container":"#858d9b","on-primary":"#ffffff","on-tertiary-fixed-variant":"#842500","tertiary-container":"#4b1100","tertiary-fixed":"#ffdbd0","on-tertiary":"#ffffff","outline":"#75777c","inverse-primary":"#bfc7d6","on-secondary-container":"#5a6574","surface-bright":"#faf9f5","surface-variant":"#e3e2df","on-surface":"#1b1c1a","primary-container":"#1e2631","surface":"#faf9f5","tertiary-fixed-dim":"#ffb59d","secondary-fixed-dim":"#bcc7d9","surface-tint":"#575f6c","inverse-surface":"#30312e"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter-desktop":"2rem","space-sm":"0.5rem","margin-tablet":"1.5rem","margin-desktop":"2.5rem","gutter-tablet":"1.5rem","space-md":"0.75rem","space-xl":"2rem","gutter":"1rem","margin":"1rem","space-xs":"0.25rem","space-lg":"1.25rem"},"fontFamily":{"body-sm":["Public Sans"],"headline-lg-mobile":["Public Sans"],"headline-xl":["Public Sans"],"label-lg":["JetBrains Mono"],"headline-lg":["Public Sans"],"headline-xl-mobile":["Public Sans"],"headline-sm":["Public Sans"],"label-md":["JetBrains Mono"],"body-lg":["Public Sans"],"body-md":["Public Sans"],"label-sm":["JetBrains Mono"]},"fontSize":{"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"headline-lg-mobile":["22px",{"lineHeight":"28px","fontWeight":"600"}],"headline-xl":["36px",{"lineHeight":"44px","fontWeight":"600"}],"label-lg":["13px",{"lineHeight":"18px","fontWeight":"500"}],"headline-lg":["26px",{"lineHeight":"34px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","fontWeight":"600"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","fontWeight":"500"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"label-sm":["10px",{"lineHeight":"14px","fontWeight":"500"}]}}}}</script></head><body class="bg-background text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col justify-between"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-surface-container-highest"><div class="h-14 w-full px-gutter-desktop flex items-center justify-between"><div class="flex items-center gap-space-md"><a class="flex items-baseline gap-space-xs" data-path="map" href="#"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-semibold">RoadSense</span><span class="inline-block w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span></a><span class="text-outline-variant font-body-sm text-body-sm select-none">/</span><span class="font-label-md text-label-md text-secondary tracking-normal">Road condition map</span></div><nav class="flex items-center gap-space-xl" data-active-classes="text-primary font-semibold"><a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" data-path="map" href="#">Map</a><a aria-current="page" class="transition-colors text-primary font-semibold" data-path="detections" href="#">Detections</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" data-path="about" href="#">About</a></nav><div class="flex items-center"><div class="inline-flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container-low rounded-lg"><span class="inline-block w-1.5 h-1.5 rounded-full bg-secondary-fixed-variant"></span><span class="font-label-sm text-label-sm text-secondary">Updated 3 min ago</span></div></div></div></header><main class="w-full pt-14 flex-1 bg-surface"><div class="flex flex-col w-full">
+<section class="w-full bg-surface-container-low py-space-xl">
+<div class="max-w-6xl mx-auto px-gutter-desktop flex flex-col md:flex-row md:items-end justify-between gap-space-lg">
+<div class="flex flex-col gap-space-xs max-w-xl">
+<div class="flex items-center gap-space-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+<span class="font-label-md text-label-md uppercase tracking-wider text-secondary">Telemetry Ledger · Real-Time Feed</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-primary tracking-tight">Recent Detections</h1>
+<p class="font-body-md text-body-md text-secondary">A clean chronological record of road defects detected across monitored routes.</p>
+</div>
+<div class="flex flex-col gap-space-sm items-start md:items-end w-full md:w-auto">
+<div class="relative w-full md:w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">search</span>
+<input class="w-full bg-surface-container-lowest text-primary placeholder-secondary font-body-sm text-body-sm pl-9 pr-space-md py-2.5 rounded-lg shadow-sm focus:outline-none focus:bg-surface-bright transition-colors" id="detectionFilterInput" placeholder="Filter by road, locality, or pincode..." type="text"/>
+</div>
+<div class="inline-flex items-center bg-surface-container p-0.5 rounded-lg shadow-sm" id="timeFilters">
+<button class="time-pill px-space-md py-1 font-label-md text-label-md rounded text-primary font-semibold bg-surface-container-lowest shadow-sm transition-all" data-filter="today">Today</button>
+<button class="time-pill px-space-md py-1 font-label-md text-label-md rounded text-secondary hover:text-primary transition-all" data-filter="7days">Last 7 days</button>
+<button class="time-pill px-space-md py-1 font-label-md text-label-md rounded text-secondary hover:text-primary transition-all" data-filter="30days">Last 30 days</button>
+<button class="time-pill px-space-md py-1 font-label-md text-label-md rounded text-secondary hover:text-primary transition-all" data-filter="all">All</button>
+</div>
+</div>
+</div>
+</section>
+<section class="w-full py-space-xl">
+<div class="max-w-6xl mx-auto px-gutter-desktop">
+<div class="hidden lg:grid grid-cols-12 gap-space-md pb-space-sm px-space-md text-secondary font-label-sm text-label-sm uppercase tracking-wider">
+<div class="col-span-1">Status</div>
+<div class="col-span-4">Location / Corridor</div>
+<div class="col-span-3">Timestamp</div>
+<div class="col-span-2">Telemetry</div>
+<div class="col-span-2 text-right">Actions</div>
+</div>
+<div class="flex flex-col gap-space-xs" id="detectionsList">
+<article class="detection-row bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-150 rounded-lg p-space-md lg:py-space-md lg:px-space-md shadow-sm" data-period="today" data-search="chinnakkada kollam mc road sh 1 691001">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-y-3 lg:gap-space-md items-center">
+<div class="lg:col-span-1 flex items-center gap-space-xs">
+<span class="relative flex h-2.5 w-2.5">
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-on-tertiary-container"></span>
+</span>
+<span class="lg:hidden font-label-sm text-label-sm text-secondary uppercase tracking-wide">Pothole Defect</span>
+</div>
+<div class="lg:col-span-4 flex flex-col">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary">Chinnakkada, Kollam</span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary">MC Road / SH 1</span>
+</div>
+<div class="lg:col-span-3 flex lg:flex-col justify-between lg:justify-center">
+<span class="font-label-md text-label-md text-primary">18 Oct 2026</span>
+<span class="font-label-sm text-label-sm text-secondary">10:42 AM IST</span>
+</div>
+<div class="lg:col-span-2 flex items-center justify-between lg:justify-start gap-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Pin</span>
+<span class="font-label-md text-label-md text-primary">691001</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Confidence</span>
+<span class="font-label-md text-label-md text-on-tertiary-container font-semibold">94%</span>
+</div>
+</div>
+<div class="lg:col-span-2 flex items-center justify-end gap-space-md pt-2 lg:pt-0">
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-primary hover:text-on-tertiary-container transition-colors" href="#">
+                View on map <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</a>
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-secondary hover:text-primary transition-colors" href="#">
+                Details <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</a>
+</div>
+</div>
+</article>
+<article class="detection-row bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-150 rounded-lg p-space-md lg:py-space-md lg:px-space-md shadow-sm" data-period="today" data-search="kanjikuzhy junction kottayam kk road 686004">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-y-3 lg:gap-space-md items-center">
+<div class="lg:col-span-1 flex items-center gap-space-xs">
+<span class="relative flex h-2.5 w-2.5">
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-on-tertiary-container"></span>
+</span>
+<span class="lg:hidden font-label-sm text-label-sm text-secondary uppercase tracking-wide">Pothole Defect</span>
+</div>
+<div class="lg:col-span-4 flex flex-col">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary">Kanjikuzhy Junction, Kottayam</span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary">KK Road</span>
+</div>
+<div class="lg:col-span-3 flex lg:flex-col justify-between lg:justify-center">
+<span class="font-label-md text-label-md text-primary">18 Oct 2026</span>
+<span class="font-label-sm text-label-sm text-secondary">09:31 AM IST</span>
+</div>
+<div class="lg:col-span-2 flex items-center justify-between lg:justify-start gap-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Pin</span>
+<span class="font-label-md text-label-md text-primary">686004</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Confidence</span>
+<span class="font-label-md text-label-md text-on-tertiary-container font-semibold">91%</span>
+</div>
+</div>
+<div class="lg:col-span-2 flex items-center justify-end gap-space-md pt-2 lg:pt-0">
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-primary hover:text-on-tertiary-container transition-colors" href="#">
+                View on map <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</a>
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-secondary hover:text-primary transition-colors" href="#">
+                Details <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</a>
+</div>
+</div>
+</article>
+<article class="detection-row bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-150 rounded-lg p-space-md lg:py-space-md lg:px-space-md shadow-sm" data-period="today" data-search="kommadikad alappuzha nh 66 bypass 688007">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-y-3 lg:gap-space-md items-center">
+<div class="lg:col-span-1 flex items-center gap-space-xs">
+<span class="relative flex h-2.5 w-2.5">
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-on-tertiary-container"></span>
+</span>
+<span class="lg:hidden font-label-sm text-label-sm text-secondary uppercase tracking-wide">Pothole Defect</span>
+</div>
+<div class="lg:col-span-4 flex flex-col">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary">Kommadikad, Alappuzha</span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary">NH 66 Bypass</span>
+</div>
+<div class="lg:col-span-3 flex lg:flex-col justify-between lg:justify-center">
+<span class="font-label-md text-label-md text-primary">18 Oct 2026</span>
+<span class="font-label-sm text-label-sm text-secondary">08:15 AM IST</span>
+</div>
+<div class="lg:col-span-2 flex items-center justify-between lg:justify-start gap-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Pin</span>
+<span class="font-label-md text-label-md text-primary">688007</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Confidence</span>
+<span class="font-label-md text-label-md text-on-tertiary-container font-semibold">89%</span>
+</div>
+</div>
+<div class="lg:col-span-2 flex items-center justify-end gap-space-md pt-2 lg:pt-0">
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-primary hover:text-on-tertiary-container transition-colors" href="#">
+                View on map <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</a>
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-secondary hover:text-primary transition-colors" href="#">
+                Details <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</a>
+</div>
+</div>
+</article>
+<article class="detection-row bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-150 rounded-lg p-space-md lg:py-space-md lg:px-space-md shadow-sm" data-period="7days" data-search="vyttila hub approach ernakulam kochi bypass 682019">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-y-3 lg:gap-space-md items-center">
+<div class="lg:col-span-1 flex items-center gap-space-xs">
+<span class="relative flex h-2.5 w-2.5">
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-on-tertiary-container"></span>
+</span>
+<span class="lg:hidden font-label-sm text-label-sm text-secondary uppercase tracking-wide">Pothole Defect</span>
+</div>
+<div class="lg:col-span-4 flex flex-col">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary">Vyttila Hub Approach, Ernakulam</span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary">Kochi Bypass</span>
+</div>
+<div class="lg:col-span-3 flex lg:flex-col justify-between lg:justify-center">
+<span class="font-label-md text-label-md text-primary">17 Oct 2026</span>
+<span class="font-label-sm text-label-sm text-secondary">11:45 PM IST</span>
+</div>
+<div class="lg:col-span-2 flex items-center justify-between lg:justify-start gap-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Pin</span>
+<span class="font-label-md text-label-md text-primary">682019</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Confidence</span>
+<span class="font-label-md text-label-md text-on-tertiary-container font-semibold">96%</span>
+</div>
+</div>
+<div class="lg:col-span-2 flex items-center justify-end gap-space-md pt-2 lg:pt-0">
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-primary hover:text-on-tertiary-container transition-colors" href="#">
+                View on map <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</a>
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-secondary hover:text-primary transition-colors" href="#">
+                Details <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</a>
+</div>
+</div>
+</article>
+<article class="detection-row bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-150 rounded-lg p-space-md lg:py-space-md lg:px-space-md shadow-sm" data-period="7days" data-search="kowdiar thiruvananthapuram raj bhavan road 695003">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-y-3 lg:gap-space-md items-center">
+<div class="lg:col-span-1 flex items-center gap-space-xs">
+<span class="relative flex h-2.5 w-2.5">
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-on-tertiary-container"></span>
+</span>
+<span class="lg:hidden font-label-sm text-label-sm text-secondary uppercase tracking-wide">Pothole Defect</span>
+</div>
+<div class="lg:col-span-4 flex flex-col">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary">Kowdiar, Thiruvananthapuram</span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary">Raj Bhavan Road</span>
+</div>
+<div class="lg:col-span-3 flex lg:flex-col justify-between lg:justify-center">
+<span class="font-label-md text-label-md text-primary">17 Oct 2026</span>
+<span class="font-label-sm text-label-sm text-secondary">07:20 PM IST</span>
+</div>
+<div class="lg:col-span-2 flex items-center justify-between lg:justify-start gap-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Pin</span>
+<span class="font-label-md text-label-md text-primary">695003</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Confidence</span>
+<span class="font-label-md text-label-md text-on-tertiary-container font-semibold">92%</span>
+</div>
+</div>
+<div class="lg:col-span-2 flex items-center justify-end gap-space-md pt-2 lg:pt-0">
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-primary hover:text-on-tertiary-container transition-colors" href="#">
+                View on map <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</a>
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-secondary hover:text-primary transition-colors" href="#">
+                Details <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</a>
+</div>
+</div>
+</article>
+<article class="detection-row bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-150 rounded-lg p-space-md lg:py-space-md lg:px-space-md shadow-sm" data-period="7days" data-search="beach road tangasseri kollam 691007">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-y-3 lg:gap-space-md items-center">
+<div class="lg:col-span-1 flex items-center gap-space-xs">
+<span class="relative flex h-2.5 w-2.5">
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-on-tertiary-container"></span>
+</span>
+<span class="lg:hidden font-label-sm text-label-sm text-secondary uppercase tracking-wide">Pothole Defect</span>
+</div>
+<div class="lg:col-span-4 flex flex-col">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary">Beach Road, Tangasseri, Kollam</span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary">Coastal Corridor Sector 2</span>
+</div>
+<div class="lg:col-span-3 flex lg:flex-col justify-between lg:justify-center">
+<span class="font-label-md text-label-md text-primary">17 Oct 2026</span>
+<span class="font-label-sm text-label-sm text-secondary">03:10 PM IST</span>
+</div>
+<div class="lg:col-span-2 flex items-center justify-between lg:justify-start gap-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Pin</span>
+<span class="font-label-md text-label-md text-primary">691007</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Confidence</span>
+<span class="font-label-md text-label-md text-on-tertiary-container font-semibold">88%</span>
+</div>
+</div>
+<div class="lg:col-span-2 flex items-center justify-end gap-space-md pt-2 lg:pt-0">
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-primary hover:text-on-tertiary-container transition-colors" href="#">
+                View on map <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</a>
+<a class="inline-flex items-center gap-0.5 font-label-md text-label-md text-secondary hover:text-primary transition-colors" href="#">
+                Details <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</a>
+</div>
+</div>
+</article>
+</div>
+<div class="mt-space-xl flex flex-col sm:flex-row items-center justify-between gap-space-md pt-space-lg">
+<span class="font-label-md text-label-md text-secondary">
+          Showing 1–25 of recent detections
+        </span>
+<button class="px-space-lg py-2.5 bg-surface-container-lowest hover:bg-surface-container text-primary font-body-md text-body-md font-medium rounded-lg shadow-sm transition-all inline-flex items-center gap-space-xs" id="loadMoreBtn">
+<span>Load earlier detections</span>
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+</div>
+<div class="mt-space-xl p-space-lg bg-surface-container-low rounded-xl">
+<div class="flex items-start gap-space-md">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">verified_user</span>
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-md text-label-md text-primary font-medium uppercase tracking-wider">Survey Methodology &amp; Spatial Coverage</span>
+<p class="font-body-sm text-body-sm text-secondary leading-relaxed m-0">
+              Observations are automatically recorded by transit-mounted optical sensors and calibrated accelerometer arrays. Detection confidence thresholds are established through dual-pass visual verification. Pavement sectors not registered in the chronological index represent segments awaiting active vehicle sweeps rather than certified defect-free conditions.
+            </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<script>
+  (function() {
+    const searchInput = document.getElementById('detectionFilterInput');
+    const rows = document.querySelectorAll('.detection-row');
+    const timeButtons = document.querySelectorAll('.time-pill');
+    let currentFilter = 'today';
+
+    function applyFilter() {
+      const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+      
+      rows.forEach(row => {
+        const text = row.getAttribute('data-search') || '';
+        const period = row.getAttribute('data-period') || '';
+        
+        let matchesTime = false;
+        if (currentFilter === 'all') matchesTime = true;
+        else if (currentFilter === 'today') matchesTime = (period === 'today');
+        else if (currentFilter === '7days') matchesTime = (period === 'today' || period === '7days');
+        else if (currentFilter === '30days') matchesTime = true;
+
+        const matchesQuery = !query || text.includes(query);
+
+        if (matchesTime && matchesQuery) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', applyFilter);
+    }
+
+    timeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        timeButtons.forEach(b => {
+          b.classList.remove('bg-surface-container-lowest', 'text-primary', 'font-semibold', 'shadow-sm');
+          b.classList.add('text-secondary');
+        });
+        btn.classList.add('bg-surface-container-lowest', 'text-primary', 'font-semibold', 'shadow-sm');
+        btn.classList.remove('text-secondary');
+        currentFilter = btn.getAttribute('data-filter') || 'today';
+        applyFilter();
+      });
+    });
+
+    const loadMore = document.getElementById('loadMoreBtn');
+    if (loadMore) {
+      loadMore.addEventListener('click', function() {
+        this.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span><span>Fetching telemetry records...</span>';
+        setTimeout(() => {
+          this.innerHTML = '<span>All available records synced</span>';
+          this.disabled = true;
+          this.classList.add('opacity-60', 'cursor-not-allowed');
+        }, 600);
+      });
+    }
+  })();
+</script></main><footer class="w-full bg-surface-container-lowest border-t border-surface-container-highest py-space-md"><div class="w-full px-gutter-desktop flex flex-col sm:flex-row items-center justify-between gap-space-sm"><p class="font-body-sm text-body-sm text-secondary m-0">RoadSense displays automated road condition observations. Roads without markers may not have been recently surveyed.</p><div class="flex items-center gap-space-lg shrink-0"><a class="font-body-sm text-body-sm text-secondary hover:text-primary transition-colors" data-path="public-data-note" href="#">Public Data Note</a><a class="font-body-sm text-body-sm text-secondary hover:text-primary transition-colors" data-path="about" href="#">About</a></div></div></footer></body></html>

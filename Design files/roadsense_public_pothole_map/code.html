@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-container-highest":"#e3e2df","on-tertiary-container":"#eb6232","on-secondary-fixed-variant":"#3d4856","error":"#ba1a1a","primary":"#09111b","surface-container":"#efeeea","on-tertiary-fixed":"#390b00","on-error-container":"#93000a","surface-container-low":"#f5f4f0","error-container":"#ffdad6","on-background":"#1b1c1a","surface-container-high":"#e9e8e4","surface-dim":"#dbdad6","on-secondary":"#ffffff","background":"#faf9f5","on-surface-variant":"#44474b","secondary-fixed":"#d8e3f5","primary-fixed-dim":"#bfc7d6","tertiary":"#270500","inverse-on-surface":"#f2f1ed","outline-variant":"#c5c6cc","on-error":"#ffffff","secondary-container":"#d8e3f5","secondary":"#545f6e","on-primary-fixed-variant":"#3f4753","surface-container-lowest":"#ffffff","primary-fixed":"#dbe3f2","on-primary-fixed":"#141c27","on-secondary-fixed":"#111c29","on-primary-container":"#858d9b","on-primary":"#ffffff","on-tertiary-fixed-variant":"#842500","tertiary-container":"#4b1100","tertiary-fixed":"#ffdbd0","on-tertiary":"#ffffff","outline":"#75777c","inverse-primary":"#bfc7d6","on-secondary-container":"#5a6574","surface-bright":"#faf9f5","surface-variant":"#e3e2df","on-surface":"#1b1c1a","primary-container":"#1e2631","surface":"#faf9f5","tertiary-fixed-dim":"#ffb59d","secondary-fixed-dim":"#bcc7d9","surface-tint":"#575f6c","inverse-surface":"#30312e"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter-desktop":"2rem","space-sm":"0.5rem","margin-tablet":"1.5rem","margin-desktop":"2.5rem","gutter-tablet":"1.5rem","space-md":"0.75rem","space-xl":"2rem","gutter":"1rem","margin":"1rem","space-xs":"0.25rem","space-lg":"1.25rem"},"fontFamily":{"body-sm":["Public Sans"],"headline-lg-mobile":["Public Sans"],"headline-xl":["Public Sans"],"label-lg":["JetBrains Mono"],"headline-lg":["Public Sans"],"headline-xl-mobile":["Public Sans"],"headline-sm":["Public Sans"],"label-md":["JetBrains Mono"],"body-lg":["Public Sans"],"body-md":["Public Sans"],"label-sm":["JetBrains Mono"]},"fontSize":{"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"headline-lg-mobile":["22px",{"lineHeight":"28px","fontWeight":"600"}],"headline-xl":["36px",{"lineHeight":"44px","fontWeight":"600"}],"label-lg":["13px",{"lineHeight":"18px","fontWeight":"500"}],"headline-lg":["26px",{"lineHeight":"34px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","fontWeight":"600"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","fontWeight":"500"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"label-sm":["10px",{"lineHeight":"14px","fontWeight":"500"}]}}}}</script></head><body class="bg-background text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col justify-between"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-surface-container-highest"><div class="h-14 w-full px-gutter-desktop flex items-center justify-between"><div class="flex items-center gap-space-md"><a class="flex items-baseline gap-space-xs" data-path="map" href="#"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-semibold">RoadSense</span><span class="inline-block w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span></a><span class="text-outline-variant font-body-sm text-body-sm select-none">/</span><span class="font-label-md text-label-md text-secondary tracking-normal">Road condition map</span></div><nav class="flex items-center gap-space-xl" data-active-classes="text-primary font-semibold"><a aria-current="page" class="transition-colors text-primary font-semibold" data-path="map" href="#">Map</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" data-path="detections" href="#">Detections</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" data-path="about" href="#">About</a></nav><div class="flex items-center"><div class="inline-flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container-low rounded-lg"><span class="inline-block w-1.5 h-1.5 rounded-full bg-secondary-fixed-variant"></span><span class="font-label-sm text-label-sm text-secondary">Updated 3 min ago</span></div></div></div></header><main class="w-full pt-14 flex-1 bg-surface"><div class="flex flex-col w-full relative select-none">
+<!-- Map Viewport Container: occupies nearly full screen height below app header -->
+<div class="relative w-full h-[calc(100vh-3.5rem)] overflow-hidden bg-[#f0eee6]">
+<!-- VECTOR CARTOGRAPHIC ENGINE: Realistic Kollam, Kerala Map Render -->
+<svg class="absolute inset-0 w-full h-full object-cover pointer-events-none" preserveaspectratio="xMidYMid slice" viewbox="0 0 1600 1000" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Water Pattern / Tonal wash -->
+<lineargradient id="ashtamudiWash" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#cadbe8"></stop>
+<stop offset="100%" stop-color="#b8cee0"></stop>
+</lineargradient>
+<lineargradient id="seaCoast" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" stop-color="#b6cde2"></stop>
+<stop offset="100%" stop-color="#cbe0ee"></stop>
+</lineargradient>
+<pattern height="40" id="landTexture" patternunits="userSpaceOnUse" width="40">
+<rect fill="#f5f3ec" height="40" width="40"></rect>
+<circle cx="20" cy="20" fill="#e5e2d8" r="0.75"></circle>
+</pattern>
+</defs>
+<!-- Landmass Base -->
+<rect fill="url(#landTexture)" height="1000" width="1600"></rect>
+<!-- Arabian Sea (West Coast / Left side) -->
+<path d="M 0,0 L 260,0 C 235,160 210,340 230,520 C 248,680 215,840 180,1000 L 0,1000 Z" fill="url(#seaCoast)"></path>
+<!-- Ashtamudi Lake Estuary & Backwaters (North / Top & East) -->
+<path d="M 390,0 C 440,80 520,110 590,90 C 660,70 700,120 740,160 C 820,130 910,140 980,110 C 1040,80 1150,130 1230,95 C 1310,60 1420,100 1600,60 L 1600,0 Z" fill="url(#ashtamudiWash)"></path>
+<path d="M 850,140 C 880,190 940,220 970,270 C 990,305 1060,330 1090,300 C 1130,260 1190,280 1260,250 C 1310,230 1400,280 1460,270 C 1510,260 1560,290 1600,280 L 1600,90 C 1440,120 1320,80 1240,110 C 1170,140 1070,90 990,125 C 930,150 890,130 850,140 Z" fill="url(#ashtamudiWash)"></path>
+<!-- Kollam Canal / TS Canal (Historical Inland Navigation) -->
+<path d="M 235,460 C 310,480 390,490 480,510 C 580,530 670,520 760,490 C 840,460 910,420 970,300" fill="none" stroke="#b2cadf" stroke-linecap="round" stroke-width="8"></path>
+<!-- Minor Street Matrix (Urban Chinnakkada & Cantonment grid) -->
+<g opacity="0.95" stroke="#ffffff" stroke-linecap="round" stroke-width="3">
+<!-- Cantonment & Anandavalleswaram Roads -->
+<path d="M 380,240 L 590,260 L 740,290 L 890,310"></path>
+<path d="M 460,180 L 480,360 L 510,520"></path>
+<path d="M 540,200 L 560,420 L 580,620"></path>
+<path d="M 640,190 L 650,380 L 680,560"></path>
+<path d="M 720,220 L 730,440 L 740,680"></path>
+<!-- Tangasseri & Port Approach Grid -->
+<path d="M 240,320 L 410,340 L 520,380"></path>
+<path d="M 260,410 L 380,430 L 490,470"></path>
+<path d="M 230,590 L 380,580 L 520,600"></path>
+<!-- Kadappakada / Residency Grid -->
+<path d="M 780,340 L 980,360 L 1150,390"></path>
+<path d="M 830,420 L 1020,440 L 1220,460"></path>
+<path d="M 880,480 L 1060,510 L 1280,540"></path>
+<path d="M 940,320 L 960,540 L 980,740"></path>
+<path d="M 1040,310 L 1070,520 L 1100,770"></path>
+<path d="M 1160,340 L 1180,580 L 1210,800"></path>
+<path d="M 600,640 L 840,660 L 1080,720"></path>
+<path d="M 450,720 L 690,750 L 930,810"></path>
+<path d="M 350,810 L 590,830 L 830,880"></path>
+</g>
+<!-- Railway Line (Southern Railway: Kollam Junction - Trivandrum / Sengottai) -->
+<g>
+<path d="M 520,1000 C 560,860 610,720 680,600 C 730,510 790,450 880,410 C 990,360 1140,320 1350,280 L 1600,240" fill="none" stroke="#8c939d" stroke-dasharray="10 8" stroke-width="3"></path>
+<path d="M 880,410 C 940,480 1060,610 1200,740 L 1450,960" fill="none" stroke="#8c939d" stroke-dasharray="8 6" stroke-width="2.5"></path>
+</g>
+<!-- Secondary Arterials (Asramam Link Road, Beach Road, Polayathode Route) -->
+<g fill="none" stroke="#fbfaf7" stroke-linecap="round" stroke-linejoin="round" stroke-width="8">
+<!-- Beach Road -->
+<path d="M 240,650 C 310,640 400,660 500,680 C 600,700 700,730 810,760 L 980,820"></path>
+<!-- Asramam Link Road & Adventure Park Bypass -->
+<path d="M 580,240 C 650,260 740,240 820,250 C 920,260 1000,290 1070,340 C 1140,400 1200,480 1260,590"></path>
+<!-- Cantonment Road -->
+<path d="M 390,320 C 470,340 560,370 650,420 C 720,460 790,510 860,570"></path>
+<!-- Residency - Ashramam Crescent -->
+<path d="M 680,180 C 760,210 860,220 940,250 C 1030,280 1100,320 1150,380"></path>
+</g>
+<!-- Primary Arterial: MC ROAD / SH 1 (Main Central corridor across Chinnakkada) -->
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<!-- Base Casing -->
+<path d="M 320,950 C 430,860 540,750 640,630 C 710,550 780,470 850,390 C 930,300 1020,200 1120,80" stroke="#d5d0c2" stroke-width="12"></path>
+<!-- Center Ribbon -->
+<path d="M 320,950 C 430,860 540,750 640,630 C 710,550 780,470 850,390 C 930,300 1020,200 1120,80" stroke="#ffffff" stroke-width="8"></path>
+</g>
+<!-- Major Highway: NH 66 (Coastal Bypass Corridor) -->
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<!-- Casing -->
+<path d="M 280,0 C 330,140 400,280 490,440 C 560,560 660,710 790,850 C 880,950 940,1000 970,1000" stroke="#d5d0c2" stroke-width="14"></path>
+<!-- Highway Fill -->
+<path d="M 280,0 C 330,140 400,280 490,440 C 560,560 660,710 790,850 C 880,950 940,1000 970,1000" stroke="#ffffff" stroke-width="10"></path>
+</g>
+<!-- High-Confidence Public Typography / Geographic Place Labels -->
+<g class="font-body-md select-none pointer-events-none">
+<!-- Waterbody Monospace Labels -->
+<text fill="#6c8ca6" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="500" letter-spacing="3" transform="rotate(-78 70 440)" x="70" y="440">ARABIAN SEA</text>
+<text fill="#6c8ca6" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="500" letter-spacing="2" x="1040" y="100">ASHTAMUDI LAKE</text>
+<text fill="#7d9db6" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="500" letter-spacing="1.5" x="1280" y="220">KALLADA ESTUARY REACH</text>
+<!-- Civic & Neighborhood Labels -->
+<g fill="#1b1c1a">
+<!-- Chinnakkada Hub -->
+<circle cx="780" cy="460" fill="#1b1c1a" r="3.5"></circle>
+<text font-family="'Public Sans', sans-serif" font-size="14" font-weight="600" letter-spacing="-0.02em" x="792" y="464">Chinnakkada</text>
+<text fill="#545f6e" font-family="'JetBrains Mono', monospace" font-size="10" x="792" y="478">CLOCK TOWER JUNCTION</text>
+<!-- Asramam -->
+<circle cx="910" cy="270" fill="#3d4856" r="3"></circle>
+<text fill="#1b1c1a" font-family="'Public Sans', sans-serif" font-size="13" font-weight="600" x="922" y="274">Asramam</text>
+<text fill="#545f6e" font-family="'JetBrains Mono', monospace" font-size="9.5" x="922" y="287">MAIDAN · ADVENTURE PARK</text>
+<!-- Kadappakada -->
+<circle cx="1060" cy="410" fill="#3d4856" r="3"></circle>
+<text fill="#1b1c1a" font-family="'Public Sans', sans-serif" font-size="13" font-weight="600" x="1072" y="414">Kadappakada</text>
+<!-- Kollam Junction Railway Terminal -->
+<rect fill="#09111b" height="6" width="6" x="740" y="550"></rect>
+<text fill="#09111b" font-family="'Public Sans', sans-serif" font-size="12" font-weight="600" x="754" y="556">Kollam Junction (QLN)</text>
+<!-- Beach / Coast -->
+<circle cx="340" cy="710" fill="#3d4856" r="3"></circle>
+<text fill="#1b1c1a" font-family="'Public Sans', sans-serif" font-size="12" font-weight="600" x="352" y="714">Kollam Beach</text>
+<text fill="#545f6e" font-family="'JetBrains Mono', monospace" font-size="9.5" x="352" y="726">MAHATMA GANDHI PARK</text>
+<!-- Cantonment -->
+<text fill="#545f6e" font-family="'Public Sans', sans-serif" font-size="12" font-weight="500" x="590" y="360">Cantonment</text>
+<!-- Anchalumoodu Direction -->
+<text fill="#75777c" font-family="'Public Sans', sans-serif" font-size="11" font-weight="500" x="1220" y="160">To Anchalumoodu →</text>
+</g>
+<!-- Route Badges -->
+<g>
+<rect fill="#ffffff" height="17" rx="3" stroke="#c5c6cc" stroke-width="1" width="48" x="420" y="780"></rect>
+<text fill="#1b1c1a" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="600" text-anchor="middle" x="444" y="792">NH 66</text>
+<rect fill="#ffffff" height="17" rx="3" stroke="#c5c6cc" stroke-width="1" width="46" x="910" y="200"></rect>
+<text fill="#1b1c1a" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="600" text-anchor="middle" x="933" y="212">SH 1</text>
+</g>
+</g>
+</svg>
+<!-- INTERACTIVE MAP NODES: Potholes, Clusters & Active Selection (SVGs & HTML Elements) -->
+<div class="absolute inset-0 pointer-events-auto">
+<!-- CLUSTER 1: 14 Potholes near Chinnakkada Underpass (x: 48%, y: 46%) -->
+<button aria-label="14 potholes clustered near Chinnakkada underpass" class="group absolute top-[47%] left-[49%] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer transition-transform duration-150 hover:scale-105 active:scale-95 focus:outline-none" type="button">
+<span class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary font-label-md text-label-md font-semibold ring-2 ring-surface-container-lowest ring-offset-2 ring-offset-on-tertiary-container shadow-md">
+          14
+        </span>
+</button>
+<!-- CLUSTER 2: 8 Potholes along Asramam Link Road bypass (x: 61%, y: 32%) -->
+<button aria-label="8 potholes clustered along Asramam Link Road" class="group absolute top-[32%] left-[61%] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer transition-transform duration-150 hover:scale-105 active:scale-95 focus:outline-none" type="button">
+<span class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-label-sm text-label-sm font-semibold ring-2 ring-surface-container-lowest ring-offset-1 ring-offset-on-tertiary-container shadow-sm">
+          8
+        </span>
+</button>
+<!-- CLUSTER 3: 5 Potholes near Kadappakada Junction (x: 68%, y: 41%) -->
+<button aria-label="5 potholes clustered near Kadappakada" class="group absolute top-[41%] left-[68%] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer transition-transform duration-150 hover:scale-105 active:scale-95 focus:outline-none" type="button">
+<span class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-on-primary font-label-sm text-label-sm font-semibold ring-2 ring-surface-container-lowest ring-offset-1 ring-offset-on-tertiary-container shadow-sm">
+          5
+        </span>
+</button>
+<!-- INDIVIDUAL MARKER 1: Beach Road Curve (x: 29%, y: 67%) -->
+<button aria-label="Single pothole detected on Beach Road" class="absolute top-[67%] left-[29%] -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-on-tertiary-container ring-2 ring-surface-container-lowest shadow-sm hover:scale-125 transition-transform cursor-pointer focus:outline-none" type="button"></button>
+<!-- INDIVIDUAL MARKER 2: Polayathode bypass link (x: 43%, y: 73%) -->
+<button aria-label="Single pothole detected near Polayathode" class="absolute top-[73%] left-[43%] -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-on-tertiary-container ring-2 ring-surface-container-lowest shadow-sm hover:scale-125 transition-transform cursor-pointer focus:outline-none" type="button"></button>
+<!-- INDIVIDUAL MARKER 3: Cantonment High School link (x: 41%, y: 35%) -->
+<button aria-label="Single pothole detected in Cantonment zone" class="absolute top-[35%] left-[41%] -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-on-tertiary-container ring-2 ring-surface-container-lowest shadow-sm hover:scale-125 transition-transform cursor-pointer focus:outline-none" type="button"></button>
+<!-- INDIVIDUAL MARKER 4: Thevally bridge approach (x: 52%, y: 22%) -->
+<button aria-label="Single pothole detected near Thevally approach" class="absolute top-[22%] left-[52%] -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-on-tertiary-container ring-2 ring-surface-container-lowest shadow-sm hover:scale-125 transition-transform cursor-pointer focus:outline-none" type="button"></button>
+<!-- CRITICAL ACTIVE SELECTED MARKER: MC Road (SH 1) at Chinnakkada (x: 47.4%, y: 44.2%) -->
+<div class="absolute top-[44.2%] left-[47.4%] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+<!-- Concentric coordinate pulse ring (Zero blur, crisp hairline aesthetic) -->
+<span class="absolute w-12 h-12 rounded-full border border-on-tertiary-container opacity-40 animate-ping"></span>
+<span class="absolute w-9 h-9 rounded-full border border-primary opacity-30"></span>
+<!-- Selected Center Node -->
+<button aria-label="Selected pothole on MC Road, Chinnakkada" class="relative z-10 w-5 h-5 rounded-full bg-on-tertiary-container ring-4 ring-primary shadow-md flex items-center justify-center focus:outline-none" type="button">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-container-lowest"></span>
+</button>
+</div>
+</div>
+<!-- FLOATING TOP CONTROLS: Structured Search & Temporal Filter Bar -->
+<div class="absolute top-space-md left-space-md right-space-md md:left-margin-desktop md:right-auto z-30 flex flex-col sm:flex-row items-stretch sm:items-center gap-space-sm max-w-2xl">
+<!-- Search Input Container -->
+<div class="flex items-center bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/60 hover:border-primary focus-within:border-primary transition-colors px-space-sm h-10 w-full sm:w-80">
+<span class="material-symbols-outlined text-secondary text-body-lg select-none mr-space-xs">search</span>
+<input class="w-full bg-transparent border-0 p-0 text-on-surface font-body-md text-body-md placeholder:text-secondary focus:outline-none" placeholder="Search a place or pincode (e.g. 691001)" type="text" value="Chinnakkada, Kollam"/>
+<button class="p-1 hover:bg-surface-container-low rounded text-secondary hover:text-primary transition-colors flex items-center justify-center" title="Locate my position" type="button">
+<span class="material-symbols-outlined text-[18px]">my_location</span>
+</button>
+</div>
+<!-- Temporal Filter Pills -->
+<div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+<button class="px-space-sm py-1 rounded bg-primary text-on-primary font-label-md text-label-md font-medium whitespace-nowrap shadow-sm" type="button">
+          All detections
+        </button>
+<button class="px-space-sm py-1 rounded bg-surface-container-lowest border border-outline-variant/60 text-secondary hover:text-primary hover:bg-surface-container-low font-label-md text-label-md whitespace-nowrap transition-colors" type="button">
+          Today
+        </button>
+<button class="px-space-sm py-1 rounded bg-surface-container-lowest border border-outline-variant/60 text-secondary hover:text-primary hover:bg-surface-container-low font-label-md text-label-md whitespace-nowrap transition-colors" type="button">
+          Last 7 days
+        </button>
+<button class="px-space-sm py-1 rounded bg-surface-container-lowest border border-outline-variant/60 text-secondary hover:text-primary hover:bg-surface-container-low font-label-md text-label-md whitespace-nowrap transition-colors" type="button">
+          Last 30 days
+        </button>
+</div>
+</div>
+<!-- FLOATING CARTOGRAPHY ZOOM CONTROLS (Bottom Right) -->
+<div class="absolute bottom-12 right-space-md z-30 flex flex-col gap-1.5">
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant/60 shadow-sm flex flex-col overflow-hidden">
+<button aria-label="Zoom in" class="w-9 h-9 flex items-center justify-center text-primary hover:bg-surface-container-low active:bg-surface-container transition-colors border-b border-surface-container-highest" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+<button aria-label="Zoom out" class="w-9 h-9 flex items-center justify-center text-primary hover:bg-surface-container-low active:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+</div>
+<button aria-label="Recenter coordinates on Kerala network" class="w-9 h-9 bg-surface-container-lowest rounded-lg border border-outline-variant/60 shadow-sm flex items-center justify-center text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[19px]">near_me</span>
+</button>
+<!-- Map Scale Indicator -->
+<div class="bg-surface-container-lowest/90 px-1.5 py-0.5 rounded border border-outline-variant/60 flex flex-col items-center select-none">
+<span class="font-label-sm text-[9px] text-secondary leading-tight">500 m</span>
+<div class="w-8 h-1 border-b-2 border-l-2 border-r-2 border-primary"></div>
+</div>
+</div>
+<!-- FLOATING SELECTED DETECTION INFORMATION PANEL (Bottom Left) -->
+<!-- STRICT Civic Utility standard: ZERO photographs, ZERO empty photo containers -->
+<div class="absolute bottom-10 left-space-md md:left-margin-desktop z-30 w-[calc(100%-2rem)] sm:w-[360px] bg-surface-container-lowest rounded-lg border border-surface-container-highest shadow-md transition-all duration-200" id="detectionCard">
+<!-- Panel Header & Status Strip -->
+<div class="px-space-md pt-space-md pb-space-sm flex items-center justify-between border-b border-surface-container-high">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container inline-block"></span>
+<span class="font-label-md text-label-md font-semibold text-on-tertiary-container tracking-wider uppercase">Pothole Detected</span>
+</div>
+<button aria-label="Close panel" class="w-6 h-6 flex items-center justify-center text-secondary hover:text-primary hover:bg-surface-container-low rounded transition-colors" onclick="document.getElementById('detectionCard').classList.add('hidden')" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Core Telemetry Content -->
+<div class="p-space-md flex flex-col gap-space-sm">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary tracking-tight font-semibold m-0">
+            Chinnakkada, Kollam
+          </h2>
+<p class="font-body-sm text-body-sm text-secondary m-0 mt-0.5">
+            MC Road (SH 1) · Northbound Carriage
+          </p>
+</div>
+<!-- Telemetry Data Grid -->
+<div class="grid grid-cols-2 gap-space-xs bg-surface-container-low rounded p-space-sm border border-surface-container-highest">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-tight">Detection Time</span>
+<span class="font-label-md text-label-md text-primary font-medium mt-0.5">18 Oct 2026 · 10:42 AM</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-tight">AI Confidence</span>
+<span class="font-label-md text-label-md text-primary font-medium mt-0.5 flex items-center gap-1">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-[#1b8738]"></span>
+              94% (Verified)
+            </span>
+</div>
+<div class="flex flex-col pt-1 border-t border-surface-container-high">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-tight">Coordinates</span>
+<span class="font-label-md text-label-md text-secondary mt-0.5">8.8872° N, 76.5912° E</span>
+</div>
+<div class="flex flex-col pt-1 border-t border-surface-container-high">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-tight">Sensor Profile</span>
+<span class="font-label-md text-label-md text-secondary mt-0.5">Transit Gyro + Vision</span>
+</div>
+</div>
+<!-- Action Row -->
+<div class="flex items-center gap-space-sm pt-space-xs">
+<a class="flex-1 inline-flex items-center justify-center gap-space-xs px-space-md py-2 bg-primary hover:bg-primary-container text-on-primary font-body-md text-body-md font-medium rounded transition-colors" data-path="detections" href="#">
+<span>View details</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+<button class="px-2.5 py-2 bg-surface-container-lowest border border-outline-variant/60 hover:bg-surface-container-low text-secondary hover:text-primary rounded transition-colors flex items-center justify-center" title="Copy coordinate link" type="button">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</button>
+</div>
+</div>
+</div>
+<!-- SUBTLE DATA TRANSPARENCY BAR (Bottom edge fixed disclaimer) -->
+<div class="absolute bottom-0 left-0 right-0 z-20 bg-surface-container-lowest/95 border-t border-surface-container-highest px-space-md py-1.5 flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-secondary">
+<span class="material-symbols-outlined text-body-sm text-secondary">info</span>
+<p class="font-body-sm text-body-sm text-secondary m-0">
+          RoadSense shows potholes detected by its monitoring system. Roads without detections may not have been recently observed.
+        </p>
+</div>
+<div class="hidden md:flex items-center gap-space-md shrink-0">
+<span class="font-label-sm text-label-sm text-secondary">Survey Grid: Kollam Municipal Corp (Zone 4)</span>
+<span class="font-label-sm text-label-sm text-secondary">Datum: WGS 84</span>
+</div>
+</div>
+</div>
+</div></main><footer class="w-full bg-surface-container-lowest border-t border-surface-container-highest py-space-md"><div class="w-full px-gutter-desktop flex flex-col sm:flex-row items-center justify-between gap-space-sm"><p class="font-body-sm text-body-sm text-secondary m-0">RoadSense displays automated road condition observations. Roads without markers may not have been recently surveyed.</p><div class="flex items-center gap-space-lg shrink-0"><a class="font-body-sm text-body-sm text-secondary hover:text-primary transition-colors" data-path="public-data-note" href="#">Public Data Note</a><a class="font-body-sm text-body-sm text-secondary hover:text-primary transition-colors" data-path="about" href="#">About</a></div></div></footer></body></html>
