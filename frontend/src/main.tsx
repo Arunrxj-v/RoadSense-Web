@@ -22,7 +22,7 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename="/roadsense">
         <App />
       </BrowserRouter>
     </QueryClientProvider>
