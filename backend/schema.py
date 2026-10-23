@@ -58,7 +58,12 @@ POSTGIS_STATEMENTS = [
 
 
 def init_database(app):
-    from models import DetectionReport, RoadProject, RoadSegment  # noqa: F401
+    from models import (  # noqa: F401
+        DetectionReport,
+        PotholeLocationMetadata,
+        RoadProject,
+        RoadSegment,
+    )
 
     with app.app_context():
         is_postgres = db.engine.dialect.name == "postgresql"

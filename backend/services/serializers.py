@@ -39,6 +39,57 @@ def road_detail(road):
     return data
 
 
+def _location_attribution(provider):
+    if provider == "maptiler":
+        return "MapTiler / OpenStreetMap contributors"
+    if provider == "nominatim":
+        return "OpenStreetMap contributors"
+    return None
+
+
+def location_summary(metadata):
+    """Public reverse-geocoded metadata, including lookup lifecycle state."""
+    if metadata is None:
+        return {
+            "status": "pending",
+            "road_name": None,
+            "road_number": None,
+            "classification": None,
+            "locality": None,
+            "pincode": None,
+            "district": None,
+            "state": None,
+            "country": None,
+            "authority": None,
+            "administrative_area": None,
+            "suburb": None,
+            "municipality": None,
+            "operator": None,
+            "provider": None,
+            "attribution": None,
+            "geocoded_at": None,
+        }
+    return {
+        "status": metadata.status or "pending",
+        "road_name": metadata.road_name,
+        "road_number": metadata.road_number,
+        "classification": metadata.classification,
+        "locality": metadata.locality,
+        "pincode": metadata.pincode,
+        "district": metadata.district,
+        "state": metadata.state,
+        "country": metadata.country,
+        "authority": metadata.authority,
+        "administrative_area": metadata.administrative_area,
+        "suburb": metadata.suburb,
+        "municipality": metadata.municipality,
+        "operator": metadata.operator,
+        "provider": metadata.provider,
+        "attribution": _location_attribution(metadata.provider),
+        "geocoded_at": iso_utc(metadata.geocoded_at),
+    }
+
+
 def project_public(project):
     """Expose contract provenance exactly as stored, never inferred.
 
@@ -83,6 +134,7 @@ def pothole_summary(pothole):
         "first_detected_at": iso_utc(pothole.first_detected_at),
         "last_detected_at": iso_utc(pothole.last_detected_at),
         "road": road_summary(pothole.road),
+        "location": location_summary(pothole.location_metadata),
     }
 
 

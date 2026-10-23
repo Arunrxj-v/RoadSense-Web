@@ -66,6 +66,37 @@ CREATE TABLE IF NOT EXISTS detection_reports (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS pothole_location_metadata (
+  id SERIAL PRIMARY KEY,
+  canonical_pothole_id INTEGER NOT NULL UNIQUE REFERENCES canonical_potholes(id) ON DELETE CASCADE,
+  status VARCHAR(16) NOT NULL DEFAULT 'pending',
+  road_name VARCHAR(255),
+  road_number VARCHAR(64),
+  classification VARCHAR(128),
+  locality VARCHAR(255),
+  pincode VARCHAR(16),
+  district VARCHAR(255),
+  state VARCHAR(255),
+  country VARCHAR(255),
+  authority VARCHAR(255),
+  administrative_area VARCHAR(255),
+  suburb VARCHAR(255),
+  municipality VARCHAR(255),
+  operator VARCHAR(255),
+  provider VARCHAR(32),
+  provider_place_id VARCHAR(128),
+  geocoded_at TIMESTAMPTZ,
+  attempted_at TIMESTAMPTZ,
+  attempt_count INTEGER NOT NULL DEFAULT 0,
+  next_retry_at TIMESTAMPTZ,
+  last_error VARCHAR(64),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pothole_location_metadata_status ON pothole_location_metadata (status);
+CREATE INDEX IF NOT EXISTS idx_pothole_location_metadata_next_retry ON pothole_location_metadata (next_retry_at);
+
 CREATE INDEX IF NOT EXISTS idx_road_segments_geom ON road_segments USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_canonical_potholes_geom ON canonical_potholes USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_canonical_potholes_geog ON canonical_potholes USING GIST (geog);

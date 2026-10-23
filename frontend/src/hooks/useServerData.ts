@@ -22,6 +22,8 @@ export function usePotholeDetail(id: string | null) {
     queryFn: ({ signal }) => fetchPothole(id as string, signal),
     enabled: Boolean(id),
     staleTime: 30_000,
+    refetchInterval: (query) =>
+      query.state.data?.location?.status === 'pending' ? 4_000 : false,
     retry: 1,
   })
 }
@@ -37,6 +39,12 @@ export function useRecentPotholes(params: {
     queryFn: ({ signal }) => fetchRecentPotholes(params, signal),
     placeholderData: (previous) => previous,
     staleTime: 20_000,
+    refetchInterval: (query) =>
+      query.state.data?.potholes.some(
+        (pothole) => pothole.location?.status === 'pending',
+      )
+        ? 5_000
+        : false,
     retry: 1,
   })
 }
@@ -48,6 +56,12 @@ export function useMapPotholes() {
     queryFn: ({ signal }) =>
       fetchRecentPotholes({ limit: 2000, offset: 0 }, signal),
     staleTime: 30_000,
+    refetchInterval: (query) =>
+      query.state.data?.potholes.some(
+        (pothole) => pothole.location?.status === 'pending',
+      )
+        ? 5_000
+        : false,
     retry: 1,
   })
 

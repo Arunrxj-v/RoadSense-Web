@@ -3,6 +3,20 @@ from urllib.parse import quote
 
 import requests
 
+from db import db
+from models import (
+    CanonicalPothole,
+    DetectionReport,
+    PotholeLocationMetadata,
+    parse_public_id,
+)
+from services.location_enrichment import enrich_pothole
+from services.reverse_geocoding import (
+    ReverseGeocodeResult,
+    _parse_maptiler,
+    valid_coordinate,
+)
+
 
 def public_id(numeric):
     return "PH-{0:06d}".format(numeric)
@@ -259,6 +273,11 @@ def test_ingest_creates_and_deduplicates_canonical_pothole(client, app, seeded):
     assert second.status_code == 200
     assert second.get_json()["pothole_id"] == canonical_id
 
+    with app.app_context():
+        pothole = db.session.get(CanonicalPothole, parse_public_id(canonical_id))
+        assert pothole.location_metadata is not None
+        assert pothole.location_metadata.status == "pending"
+
     detail = client.get("/api/v1/potholes/{0}".format(canonical_id)).get_json()
     assert detail["report_count"] == 7
     assert detail["id"] == canonical_id
@@ -276,8 +295,6 @@ def test_ingest_creates_and_deduplicates_canonical_pothole(client, app, seeded):
     assert duplicate.get_json()["duplicate_report"] is True
 
     with app.app_context():
-        from models import CanonicalPothole, DetectionReport
-
         assert CanonicalPothole.query.count() == 4
         assert DetectionReport.query.filter_by(report_id="android-report-2").count() == 1
 
@@ -321,3 +338,156 @@ def test_ingest_new_pothole_and_validation(client, seeded):
         headers=headers,
     )
     assert future.status_code == 400
+
+
+def test_maptiler_parser_extracts_only_provider_fields():
+    payload = {
+        "features": [
+            {
+                "id": "address.123",
+                "text": "Engineering College Road",
+                "place_type": ["address"],
+                "properties": {"kind": "street"},
+                "feature_tags": {"highway": "residential"},
+                "context": [
+                    {"id": "postal_code.689121", "text": "689 121"},
+                    {"id": "place.1", "text": "Chengannur"},
+                    {"id": "county.2", "text": "Chengannur"},
+                    {"id": "subregion.3", "text": "Alappuzha"},
+                    {"id": "region.4", "text": "Kerala"},
+                    {"id": "country.5", "text": "India"},
+                ],
+            }
+        ]
+    }
+
+    result = _parse_maptiler(payload)
+
+    assert result.road_name == "Engineering College Road"
+    assert result.road_number is None
+    assert result.classification == "residential"
+    assert result.locality == "Chengannur"
+    assert result.pincode == "689121"
+    assert result.district == "Alappuzha"
+    assert result.administrative_area == "Chengannur"
+    assert result.state == "Kerala"
+    assert result.country == "India"
+    assert result.authority is None
+    assert result.provider_place_id == "address.123"
+    assert _parse_maptiler({"features": []}) is None
+
+
+def test_reverse_geocoding_coordinate_validation():
+    assert valid_coordinate(9.3177129, 76.6166554)
+    assert not valid_coordinate(None, 76.6)
+    assert not valid_coordinate(91, 76.6)
+    assert not valid_coordinate(9.3, 181)
+
+
+def test_public_api_exposes_pending_location_state(client, seeded):
+    response = client.get("/api/v1/potholes/recent?limit=10")
+    assert response.status_code == 200
+    body = response.get_json()
+    assert all(item["location"]["status"] == "pending" for item in body["potholes"])
+
+    detail = client.get(
+        "/api/v1/potholes/{0}".format(public_id(seeded["potholes"][0]))
+    ).get_json()
+    assert detail["location"]["status"] == "pending"
+    assert detail["location"]["road_name"] is None
+    assert detail["road"]["name"] == "MC Road"
+
+
+def test_public_api_exposes_cached_location_metadata(client, app, seeded):
+    pothole = db.session.get(CanonicalPothole, seeded["potholes"][0])
+    db.session.add(
+        PotholeLocationMetadata(
+            canonical_pothole_id=pothole.id,
+            status="resolved",
+            road_name="Engineering College Road",
+            classification="residential",
+            locality="Chengannur",
+            pincode="689121",
+            district="Alappuzha",
+            state="Kerala",
+            country="India",
+            administrative_area="Chengannur",
+            provider="maptiler",
+            geocoded_at=datetime.now(timezone.utc),
+        )
+    )
+    db.session.commit()
+    db.session.expire_all()
+
+    detail = client.get(
+        "/api/v1/potholes/{0}".format(public_id(seeded["potholes"][0]))
+    ).get_json()
+    location = detail["location"]
+    assert location["status"] == "resolved"
+    assert location["road_name"] == "Engineering College Road"
+    assert location["pincode"] == "689121"
+    assert location["district"] == "Alappuzha"
+    assert location["administrative_area"] == "Chengannur"
+    assert location["attribution"] == "MapTiler / OpenStreetMap contributors"
+
+    search = client.get("/api/v1/potholes/recent?q=Engineering").get_json()
+    assert search["meta"]["total"] == 1
+    assert search["potholes"][0]["id"] == public_id(seeded["potholes"][0])
+
+    locality = client.get("/api/v1/potholes/recent?q=Chengannur").get_json()
+    assert locality["meta"]["total"] == 1
+    assert locality["potholes"][0]["id"] == public_id(seeded["potholes"][0])
+
+
+def test_enrich_pothole_caches_result_and_is_idempotent(app, seeded, monkeypatch):
+    calls = []
+
+    def fake_reverse_geocode(latitude, longitude):
+        calls.append((latitude, longitude))
+        return ReverseGeocodeResult(
+            road_name="Engineering College Road",
+            classification="residential",
+            locality="Chengannur",
+            pincode="689121",
+            district="Alappuzha",
+            state="Kerala",
+            country="India",
+            administrative_area="Chengannur",
+            provider_place_id="address.123",
+        )
+
+    monkeypatch.setattr(
+        "services.reverse_geocoding.reverse_geocode", fake_reverse_geocode
+    )
+
+    with app.app_context():
+        pothole = db.session.get(CanonicalPothole, seeded["potholes"][0])
+        metadata = enrich_pothole(pothole)
+        assert metadata.status == "resolved"
+        assert metadata.road_name == "Engineering College Road"
+        assert metadata.district == "Alappuzha"
+        assert metadata.attempt_count == 1
+        assert metadata.geocoded_at is not None
+
+        again = enrich_pothole(pothole)
+        assert again.id == metadata.id
+        assert len(calls) == 1
+
+
+def test_no_result_uses_long_retry_window(app, seeded, monkeypatch):
+    monkeypatch.setattr(
+        "services.reverse_geocoding.reverse_geocode", lambda *args: None
+    )
+
+    with app.app_context():
+        pothole = db.session.get(CanonicalPothole, seeded["potholes"][0])
+        before = datetime.now(timezone.utc)
+        metadata = enrich_pothole(pothole)
+
+        assert metadata.status == "failed"
+        assert metadata.last_error == "no_result"
+        retry_at = metadata.next_retry_at
+        if retry_at.tzinfo is None:
+            retry_at = retry_at.replace(tzinfo=timezone.utc)
+        delay = (retry_at - before).total_seconds()
+        assert 604700 <= delay <= 604900

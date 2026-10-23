@@ -11,6 +11,10 @@ from flask import Blueprint, current_app, jsonify, request
 
 from db import db
 from models import CanonicalPothole, DetectionReport
+from services.location_enrichment import (
+    enqueue_pothole_enrichment,
+    ensure_metadata,
+)
 from services.serializers import iso_utc
 from services.spatial import find_canonical_near, match_road
 
@@ -169,8 +173,16 @@ def ingest_report():
         confidence=confidence,
         observed_at=observed_at,
     )
+    ensure_metadata(canonical)
     db.session.add(report)
     db.session.commit()
+    try:
+        enqueue_pothole_enrichment(canonical.id)
+    except Exception:
+        current_app.logger.exception(
+            "Could not enqueue location enrichment for pothole %s",
+            canonical.public_id,
+        )
 
     return (
         jsonify(

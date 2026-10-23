@@ -28,6 +28,13 @@ def _int(name: str, default: int) -> int:
         return default
 
 
+def _float(name: str, default: float) -> float:
+    try:
+        return float(os.getenv(name, str(default)))
+    except ValueError:
+        return default
+
+
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "development-only-change-me")
     SQLALCHEMY_DATABASE_URI = os.getenv(
@@ -73,6 +80,34 @@ class Config:
     )
     GEOCODING_TIMEOUT_SECONDS = _int("GEOCODING_TIMEOUT_SECONDS", 8)
     GEOCODING_CACHE_SECONDS = _int("GEOCODING_CACHE_SECONDS", 86400)
+
+    MAPTILER_API_KEY = os.getenv("MAPTILER_API_KEY", "")
+    MAPTILER_GEOCODING_URL = os.getenv(
+        "MAPTILER_GEOCODING_URL", "https://api.maptiler.com/geocoding"
+    )
+    # Origin-restricted MapTiler keys need the approved site origin. Prefer a
+    # server key without origin restrictions when one is available.
+    MAPTILER_REFERER = os.getenv("MAPTILER_REFERER", "")
+    REVERSE_GEOCODING_ENABLED = _bool("REVERSE_GEOCODING_ENABLED", True)
+    REVERSE_GEOCODING_ASYNC = _bool("REVERSE_GEOCODING_ASYNC", True)
+    REVERSE_GEOCODING_LANGUAGE = os.getenv("REVERSE_GEOCODING_LANGUAGE", "en")
+    REVERSE_GEOCODING_TIMEOUT_SECONDS = _int(
+        "REVERSE_GEOCODING_TIMEOUT_SECONDS", 8
+    )
+    REVERSE_GEOCODING_MIN_INTERVAL_SECONDS = _float(
+        "REVERSE_GEOCODING_MIN_INTERVAL_SECONDS", 0.25
+    )
+    REVERSE_GEOCODING_MAX_ATTEMPTS = _int("REVERSE_GEOCODING_MAX_ATTEMPTS", 6)
+    REVERSE_GEOCODING_RETRY_BASE_SECONDS = _int(
+        "REVERSE_GEOCODING_RETRY_BASE_SECONDS", 900
+    )
+    REVERSE_GEOCODING_RETRY_MAX_SECONDS = _int(
+        "REVERSE_GEOCODING_RETRY_MAX_SECONDS", 86400
+    )
+    REVERSE_GEOCODING_NO_RESULT_RETRY_SECONDS = _int(
+        "REVERSE_GEOCODING_NO_RESULT_RETRY_SECONDS", 604800
+    )
+    REVERSE_GEOCODING_BATCH_LIMIT = _int("REVERSE_GEOCODING_BATCH_LIMIT", 100)
 
     PUBLIC_DEFAULT_LIMIT = _int("PUBLIC_DEFAULT_LIMIT", 500)
     PUBLIC_MAX_LIMIT = _int("PUBLIC_MAX_LIMIT", 2000)

@@ -109,10 +109,38 @@ export function severityLabel(severity: string | null | undefined): string {
 
 export function locationTitle(pothole: PotholeSummary): string {
   const road = pothole.road
+  const location = pothole.location
+  if (location?.locality) return location.locality
+  if (location?.road_name) return location.road_name
   if (road?.locality) return road.locality
   if (road?.name) return road.name
+  if (location?.pincode) return `PIN ${location.pincode}`
   if (road?.pincode) return `PIN ${road.pincode}`
   return 'Unmapped road segment'
+}
+
+export function potholeRoadPrimaryLabel(pothole: PotholeSummary): string {
+  const location = pothole.location
+  if (location?.road_name) {
+    return location.road_number
+      ? `${location.road_name} (${location.road_number})`
+      : location.road_name
+  }
+  return roadPrimaryLabel(pothole.road)
+}
+
+export function potholeRoadSecondaryLabel(pothole: PotholeSummary): string {
+  const location = pothole.location
+  const parts = [location?.classification, location?.authority].filter(Boolean)
+  if (parts.length > 0) return parts.join(' · ')
+  if (pothole.road) return roadSecondaryLabel(pothole.road)
+  if (location?.status === 'pending') return 'Resolving location metadata…'
+  if (location?.status === 'resolved') return 'Road metadata resolved'
+  return 'Road metadata not recorded'
+}
+
+export function potholePincode(pothole: PotholeSummary): string | null {
+  return pothole.location?.pincode || pothole.road?.pincode || null
 }
 
 export function roadPrimaryLabel(road: RoadSummary | null): string {

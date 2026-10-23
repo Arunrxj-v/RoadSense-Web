@@ -112,6 +112,10 @@ def create_app(config_object=None):
         init_database(app)
         print("RoadSense database initialised.")
 
+    from services.location_enrichment import register_cli
+
+    register_cli(app)
+
     if app.config.get("AUTO_INIT_DB"):
         try:
             from schema import init_database

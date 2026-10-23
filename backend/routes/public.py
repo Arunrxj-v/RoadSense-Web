@@ -7,7 +7,13 @@ from sqlalchemy import cast, func, or_, String
 from sqlalchemy.orm import joinedload
 
 from db import db
-from models import CanonicalPothole, RoadSegment, format_public_id, parse_public_id
+from models import (
+    CanonicalPothole,
+    PotholeLocationMetadata,
+    RoadSegment,
+    format_public_id,
+    parse_public_id,
+)
 from services import geocoding
 from services.serializers import (
     iso_utc,
@@ -120,11 +126,25 @@ def _apply_filters(query):
             RoadSegment.locality.ilike(like),
             RoadSegment.pincode.ilike(like),
             RoadSegment.authority.ilike(like),
+            PotholeLocationMetadata.road_name.ilike(like),
+            PotholeLocationMetadata.road_number.ilike(like),
+            PotholeLocationMetadata.locality.ilike(like),
+            PotholeLocationMetadata.pincode.ilike(like),
+            PotholeLocationMetadata.district.ilike(like),
+            PotholeLocationMetadata.state.ilike(like),
+            PotholeLocationMetadata.authority.ilike(like),
             cast(CanonicalPothole.id, String).ilike(like),
         ]
         if numeric is not None:
             clauses.append(CanonicalPothole.id == numeric)
-        query = query.outerjoin(RoadSegment).filter(or_(*clauses))
+        query = (
+            query.outerjoin(RoadSegment)
+            .outerjoin(
+                PotholeLocationMetadata,
+                PotholeLocationMetadata.canonical_pothole_id == CanonicalPothole.id,
+            )
+            .filter(or_(*clauses))
+        )
     return query
 
 

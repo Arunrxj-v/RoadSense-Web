@@ -12,7 +12,8 @@ import {
   formatDateIST,
   formatTimeIST,
   locationTitle,
-  roadPrimaryLabel,
+  potholePincode,
+  potholeRoadPrimaryLabel,
   statusLabel,
 } from '../lib/format'
 import { sinceForPeriod, type Period } from '../lib/time'
@@ -180,7 +181,7 @@ export function DetectionsPage() {
 
                     <div className="ledger-row__location">
                       <h2 className="ledger-row__title">{locationTitle(pothole)}</h2>
-                      <span className="ledger-row__road">{roadPrimaryLabel(pothole.road)}</span>
+                      <span className="ledger-row__road">{potholeRoadPrimaryLabel(pothole)}</span>
                     </div>
 
                     <div className="ledger-row__time">
@@ -191,7 +192,7 @@ export function DetectionsPage() {
                     <div className="ledger-row__telemetry">
                       <div className="telemetry-mini">
                         <span className="telemetry-mini__label">Pin</span>
-                        <span className="telemetry-mini__value">{pothole.road?.pincode || '—'}</span>
+                        <span className="telemetry-mini__value">{potholePincode(pothole) || '—'}</span>
                       </div>
                       <div className="telemetry-mini">
                         <span className="telemetry-mini__label">Confidence</span>

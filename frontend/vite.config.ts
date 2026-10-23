@@ -1,5 +1,36 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type Connect, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+
+const PUBLIC_BASE = '/roadsense/'
+
+function basePathRedirectPlugin(): Plugin {
+  const redirect: Connect.NextHandleFunction = (req, res, next) => {
+    const url = req.url || ''
+    const queryIndex = url.indexOf('?')
+    const pathname = queryIndex === -1 ? url : url.slice(0, queryIndex)
+
+    if (pathname !== '/roadsense') {
+      next()
+      return
+    }
+
+    const query = queryIndex === -1 ? '' : url.slice(queryIndex)
+    res.statusCode = 308
+    res.setHeader('Location', `${PUBLIC_BASE}${query}`)
+    res.setHeader('Cache-Control', 'no-store')
+    res.end()
+  }
+
+  return {
+    name: 'roadsense-base-path-redirect',
+    configureServer(server) {
+      server.middlewares.use(redirect)
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(redirect)
+    },
+  }
+}
 
 export default defineConfig(({ command, mode, isPreview }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -21,8 +52,8 @@ export default defineConfig(({ command, mode, isPreview }) => {
   }
 
   return {
-    base: '/roadsense/',
-    plugins: [react()],
+    base: PUBLIC_BASE,
+    plugins: [react(), basePathRedirectPlugin()],
     optimizeDeps: {
       // MapLibre's worker is resolved from its package URL. Vite's dependency
       // pre-bundling rewrites that URL and breaks the worker in development.

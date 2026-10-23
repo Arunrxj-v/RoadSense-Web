@@ -5,8 +5,8 @@ import {
   formatCompactDateTimeIST,
   formatCoordinates,
   locationTitle,
-  roadPrimaryLabel,
-  roadSecondaryLabel,
+  potholeRoadPrimaryLabel,
+  potholeRoadSecondaryLabel,
   statusLabel,
 } from '../lib/format'
 import { potholePath } from '../lib/api'
@@ -72,8 +72,8 @@ export function PotholeCard({ pothole, onClose }: PotholeCardProps) {
 
       <div className="pothole-card__body">
         <h2 className="pothole-card__title">{locationTitle(pothole)}</h2>
-        <p className="pothole-card__subtitle">{roadPrimaryLabel(pothole.road)}</p>
-        <p className="pothole-card__road-meta">{roadSecondaryLabel(pothole.road)}</p>
+        <p className="pothole-card__subtitle">{potholeRoadPrimaryLabel(pothole)}</p>
+        <p className="pothole-card__road-meta">{potholeRoadSecondaryLabel(pothole)}</p>
 
         <div className="telemetry-grid">
           <div className="telemetry-cell">

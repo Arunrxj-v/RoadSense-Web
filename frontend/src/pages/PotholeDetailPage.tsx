@@ -17,6 +17,7 @@ import {
   formatDistance,
   formatTimeIST,
   locationTitle,
+  potholeRoadPrimaryLabel,
   projectReference,
   projectYear,
   roadPrimaryLabel,
@@ -113,12 +114,25 @@ export function PotholeDetailPage() {
   }
 
   const road = pothole.road
+  const locationMetadata = pothole.location
   const project = pothole.project
   const verification = verificationPresentation(project)
   const location = locationTitle(pothole)
-  const subtitle = road
-    ? [roadPrimaryLabel(road), road.classification].filter(Boolean).join(' · ')
+  const resolving = locationMetadata?.status === 'pending'
+  const roadLabel = potholeRoadPrimaryLabel(pothole)
+  const subtitleParts = [
+    roadLabel !== 'Road information unavailable' ? roadLabel : null,
+    locationMetadata?.classification || road?.classification,
+    locationMetadata?.locality || road?.locality,
+    locationMetadata?.state,
+  ].filter(Boolean)
+  const subtitle = subtitleParts.length
+    ? subtitleParts.join(' · ')
     : 'Road information unavailable'
+  const displayValue = (primary?: string | null, fallback?: string | null) =>
+    primary || fallback || (resolving ? 'Resolving…' : 'Not recorded')
+  const resolvingClass = (primary?: string | null, fallback?: string | null) =>
+    !primary && !fallback && resolving ? 'meta-row__value--resolving' : undefined
   const showContractor = Boolean(project?.contractor)
   const contractorValue = showContractor
     ? project?.contractor
@@ -203,27 +217,57 @@ export function PotholeDetailPage() {
                   <dl className="meta-list">
                     <div className="meta-row">
                       <dt>Road name</dt>
-                      <dd>{road?.name || 'Not recorded'}</dd>
+                      <dd className={resolvingClass(locationMetadata?.road_name, road?.name)}>
+                        {displayValue(locationMetadata?.road_name, road?.name)}
+                      </dd>
                     </div>
                     <div className="meta-row">
                       <dt>Road number</dt>
-                      <dd className="mono">{road?.number || 'Not recorded'}</dd>
+                      <dd className={['mono', resolvingClass(locationMetadata?.road_number, road?.number)].filter(Boolean).join(' ') || undefined}>
+                        {displayValue(locationMetadata?.road_number, road?.number)}
+                      </dd>
                     </div>
                     <div className="meta-row">
                       <dt>Corridor classification</dt>
-                      <dd>{road?.classification || 'Not recorded'}</dd>
+                      <dd className={resolvingClass(locationMetadata?.classification, road?.classification)}>
+                        {displayValue(locationMetadata?.classification, road?.classification)}
+                      </dd>
                     </div>
                     <div className="meta-row">
                       <dt>Locality</dt>
-                      <dd>{road?.locality || 'Not recorded'}</dd>
+                      <dd className={resolvingClass(locationMetadata?.locality, road?.locality)}>
+                        {displayValue(locationMetadata?.locality, road?.locality)}
+                      </dd>
+                    </div>
+                    <div className="meta-row">
+                      <dt>District</dt>
+                      <dd className={resolvingClass(locationMetadata?.district)}>
+                        {displayValue(locationMetadata?.district)}
+                      </dd>
+                    </div>
+                    <div className="meta-row">
+                      <dt>State</dt>
+                      <dd className={resolvingClass(locationMetadata?.state)}>
+                        {displayValue(locationMetadata?.state)}
+                      </dd>
+                    </div>
+                    <div className="meta-row">
+                      <dt>Country</dt>
+                      <dd className={resolvingClass(locationMetadata?.country)}>
+                        {displayValue(locationMetadata?.country)}
+                      </dd>
                     </div>
                     <div className="meta-row">
                       <dt>Postal index code</dt>
-                      <dd className="mono">{road?.pincode || 'Not recorded'}</dd>
+                      <dd className={['mono', resolvingClass(locationMetadata?.pincode, road?.pincode)].filter(Boolean).join(' ') || undefined}>
+                        {displayValue(locationMetadata?.pincode, road?.pincode)}
+                      </dd>
                     </div>
                     <div className="meta-row">
                       <dt>Jurisdictional authority</dt>
-                      <dd>{road?.authority || 'Not recorded'}</dd>
+                      <dd className={resolvingClass(locationMetadata?.authority, road?.authority)}>
+                        {displayValue(locationMetadata?.authority, road?.authority)}
+                      </dd>
                     </div>
                     <div className="meta-row">
                       <dt>Geographic coordinates</dt>
@@ -249,9 +293,11 @@ export function PotholeDetailPage() {
                       <span className="verification-digest__title">Record verification digest</span>
                       <p>
                         This is a canonical pothole formed by deduplicating repeated vehicle
-                        observations server-side. Road metadata is shown only where a linked road
-                        segment record exists. No road or contractor values are inferred from
-                        proximity alone.
+                        observations server-side. Address and road metadata are resolved from the
+                        canonical GPS coordinates using {locationMetadata?.attribution || 'map data'}.
+                        Fields the provider does not return remain “Not recorded”; road class,
+                        route number and authority are never inferred. Contractor values come only
+                        from a linked source-backed work record.
                       </p>
                     </div>
                   </div>
@@ -267,7 +313,7 @@ export function PotholeDetailPage() {
                     </span>
                     <a
                       className="inline-link"
-                      href={`https://www.google.com/maps/?q=${pothole.latitude.toFixed(6)},${pothole.longitude.toFixed(6)}`}
+                      href={`https://www.google.com/maps?q=${pothole.latitude},${pothole.longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -283,7 +329,7 @@ export function PotholeDetailPage() {
                         {pothole.latitude.toFixed(6)}° N, {pothole.longitude.toFixed(6)}° E
                       </strong>
                       <span>
-                        {roadPrimaryLabel(road)} / {road?.locality || 'Locality not recorded'}
+                        {roadLabel} / {locationMetadata?.locality || road?.locality || 'Locality not recorded'}
                       </span>
                     </div>
                     <div className="inset-topbadge">RECORD INSET · WGS 84</div>

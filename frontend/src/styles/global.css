@@ -1868,6 +1868,12 @@ svg {
   line-height: 16px;
 }
 
+.meta-row dd.meta-row__value--resolving {
+  color: var(--secondary);
+  font-style: italic;
+  font-weight: 400;
+}
+
 .coords-box {
   display: inline-flex;
   align-items: center;
@@ -1961,6 +1967,19 @@ svg {
 
 .inset-map__canvas .maplibregl-ctrl-top-left {
   margin: 8px 0 0 8px;
+}
+
+.inset-map__canvas .maplibregl-ctrl-bottom-right {
+  bottom: 38px;
+}
+
+.inset-map__canvas .maplibregl-ctrl-attrib {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--secondary);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 13px;
+  border-radius: 3px;
 }
 
 .inset-map__canvas .maplibregl-ctrl-group {

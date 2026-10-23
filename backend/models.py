@@ -1,11 +1,12 @@
 """RoadSense relational schema.
 
 canonical_potholes  one row per physical pothole (public map source)
+pothole_location_metadata  cached reverse-geocoded address/road metadata
 detection_reports   individual vehicle observations (never shown as markers)
 road_segments       road metadata + optional PostGIS line geometry
 road_projects       public work/contract records with provenance
 
-The public web tier only reads the first, third and fourth tables.
+The public web tier only reads the first, second, fourth and fifth tables.
 """
 from datetime import datetime, timezone
 
@@ -85,10 +86,65 @@ class CanonicalPothole(db.Model):
     reports = db.relationship(
         "DetectionReport", back_populates="canonical_pothole", lazy="noload"
     )
+    location_metadata = db.relationship(
+        "PotholeLocationMetadata",
+        back_populates="pothole",
+        uselist=False,
+        cascade="all, delete-orphan",
+        lazy="joined",
+    )
 
     @property
     def public_id(self):
         return format_public_id(self.id)
+
+
+class PotholeLocationMetadata(db.Model):
+    """Cached reverse-geocoding result for one canonical pothole.
+
+    Coordinates remain authoritative on ``canonical_potholes``. This table only
+    stores provider-returned metadata and the lookup lifecycle state so public
+    reads never call the geocoder.
+    """
+
+    __tablename__ = "pothole_location_metadata"
+
+    id = db.Column(db.Integer, primary_key=True)
+    canonical_pothole_id = db.Column(
+        db.Integer,
+        db.ForeignKey("canonical_potholes.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    status = db.Column(db.String(16), nullable=False, default="pending", index=True)
+
+    road_name = db.Column(db.String(255))
+    road_number = db.Column(db.String(64))
+    classification = db.Column(db.String(128))
+    locality = db.Column(db.String(255))
+    pincode = db.Column(db.String(16))
+    district = db.Column(db.String(255))
+    state = db.Column(db.String(255))
+    country = db.Column(db.String(255))
+    authority = db.Column(db.String(255))
+    administrative_area = db.Column(db.String(255))
+    suburb = db.Column(db.String(255))
+    municipality = db.Column(db.String(255))
+    operator = db.Column(db.String(255))
+
+    provider = db.Column(db.String(32))
+    provider_place_id = db.Column(db.String(128))
+    geocoded_at = db.Column(db.DateTime(timezone=True))
+    attempted_at = db.Column(db.DateTime(timezone=True))
+    attempt_count = db.Column(db.Integer, nullable=False, default=0)
+    next_retry_at = db.Column(db.DateTime(timezone=True), index=True)
+    last_error = db.Column(db.String(64))
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    updated_at = db.Column(
+        db.DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow
+    )
+
+    pothole = db.relationship("CanonicalPothole", back_populates="location_metadata")
 
 
 class DetectionReport(db.Model):

@@ -16,6 +16,28 @@ export interface RoadDetail extends RoadSummary {
   geometry_available: boolean
 }
 
+export type LocationStatus = 'pending' | 'resolved' | 'failed' | 'skipped' | string
+
+export interface PotholeLocation {
+  status: LocationStatus
+  road_name: string | null
+  road_number: string | null
+  classification: string | null
+  locality: string | null
+  pincode: string | null
+  district: string | null
+  state: string | null
+  country: string | null
+  authority: string | null
+  administrative_area: string | null
+  suburb: string | null
+  municipality: string | null
+  operator: string | null
+  provider: string | null
+  attribution: string | null
+  geocoded_at: string | null
+}
+
 export interface Project {
   name: string | null
   tender_id: string | null
@@ -40,6 +62,7 @@ export interface PotholeSummary {
   first_detected_at: string
   last_detected_at: string
   road: RoadSummary | null
+  location?: PotholeLocation | null
 }
 
 export interface PotholeDetail extends Omit<PotholeSummary, 'road'> {

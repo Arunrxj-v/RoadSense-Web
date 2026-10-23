@@ -13,10 +13,12 @@ references, so the backend and frontend were both built in this phase.
   recent-feed load, time filters, deep-linkable map state, selected-pothole preview card,
   and shareable pothole links.
 - Indian PIN code search, resolved server-side, with loading/error feedback.
-- Detections ledger with time filters, server-side text search, pagination,
+- Detections ledger with time filters, server-side text search (including cached
+  reverse-geocoded road, locality, district, state, and PIN), pagination,
   responsive card layout, and explicit empty/error states.
-- Pothole detail page with canonical record metadata, road data, micro-location
-  inset, provenance-aware contract record, verification labels, and source link.
+- Pothole detail page with canonical record metadata, cached reverse-geocoded
+  address/road data, micro-location inset, provenance-aware contract record,
+  verification labels, and source link.
 - About and Public Data Note pages, plus a branded 404 page.
 - Responsive layouts checked at 1440 px, 834 px, and 390 px widths.
 - No internal stack names, credentials, camera media, or raw sensor data are
@@ -28,6 +30,10 @@ references, so the backend and frontend were both built in this phase.
   `report_id` handling and spatial/temporal deduplication into canonical potholes.
 - Read-only public endpoints for health, metadata, bbox queries, ledger search,
   nearby queries, detail, roads, and PIN geocoding.
+- Cached MapTiler reverse geocoding for canonical potholes in a separate
+  `pothole_location_metadata` table, with pending/resolved/failed/skipped
+  lifecycle, background enrichment, retry backoff, and an idempotent
+  `enrich-locations` CLI. Public reads never call the provider.
 - PostGIS geometry/geography columns, GiST indexes, and sync triggers for
   production; SQLite fallback for development and tests.
 - Public serializers deliberately omit internal identifiers and raw reports.
@@ -43,9 +49,8 @@ references, so the backend and frontend were both built in this phase.
   published on the home server at a configurable `API_BIND_ADDRESS:API_PORT`
   (default `0.0.0.0:5001`); PostgreSQL remains internal to the Compose network.
 - The browser-facing API base is centralized in `frontend/src/lib/api.ts` and
-  points at the Tailscale home server:
-  `http://100.104.179.69:5001/api/v1`. The Vite proxy remains available as an
-  optional same-origin alternative.
+  uses the same-origin `/api/v1` path. Vite proxies `/api` to Flask during
+  development, and the bundled nginx proxies `/api/` in production.
 - CORS is environment-driven and defaults to the local and Tailscale website
   origins used by this deployment.
 - Environment examples for local and Compose deployments.
@@ -56,11 +61,12 @@ references, so the backend and frontend were both built in this phase.
 
 | Check | Result |
 | --- | --- |
-| Backend test suite (`pytest -q`) | 16 passed |
-| Frontend unit tests (`npm test`) | 11 passed |
+| Backend test suite (`pytest -q`) | 22 passed |
+| Frontend unit tests (`npm test`) | 13 passed |
 | Frontend typecheck (`npm run typecheck`) | passed |
 | Frontend lint (`npm run lint`) | passed |
 | Frontend production build (`npm run build`) | passed |
+| Reverse geocoding tests | MapTiler parser, cache/idempotency, no-result retry, pending/resolved API payloads passed |
 | PostGIS smoke test | bbox, nearby, detail, road, ingestion, geometry triggers, and GiST indexes passed |
 | Docker Compose build | db, backend, and frontend built and became healthy |
 | Full-stack smoke via nginx | health, meta, recent potholes, bbox, ingestion, and SPA fallback passed |
@@ -92,7 +98,13 @@ path but shows that field false-positive tuning is still required.
 - **Canonical-only map**: raw detection reports are never map features. This
   prevents a single physical pothole from appearing multiple times.
 - **Server-side geocoding**: avoids exposing third-party API keys in the browser
-  and keeps provider attribution and request limits under server control.
+  and keeps provider attribution and request limits under server control. PIN
+  lookup uses Nominatim; reverse geocoding uses MapTiler with the canonical
+  coordinate as the sole input.
+- **Cached reverse geocoding**: provider results and lifecycle state are stored in
+  `pothole_location_metadata`, so map/detail reads stay fast and do not depend on
+  provider uptime. Missing route number, classification, or authority stays
+  unset rather than being inferred.
 - **Provenance over inference**: absent road/contract data is shown as absent
   rather than guessed from proximity.
 - **PostGIS-first with SQLite fallback**: production gets real spatial indexing;
@@ -112,8 +124,15 @@ path but shows that field false-positive tuning is still required.
 ## Environment notes
 
 - Local verification used Python 3.9.6, Node 26, SQLite, and the supplied venv.
-- The configured Tailscale home-server address is `100.104.179.69`; update
-  `VITE_API_BASE_URL` and `CORS_ORIGINS` if it changes.
+- The configured Tailscale home-server address is `100.104.179.69`; update the
+  Android build property, `VITE_API_PROXY_TARGET`/`API_ORIGIN` for local
+  development, and `CORS_ORIGINS` if it changes.
+- Local development and the deployed site use separate databases by default.
+  `VITE_API_PROXY_TARGET` and the Compose `API_ORIGIN` must point at the intended
+  backend; point both at the deployed HTTPS root to read fleet data locally.
+  The default `API_ORIGIN=http://backend:5000` keeps standalone Compose isolated.
+- The local nginx upstream needs `proxy_ssl_server_name on` when `API_ORIGIN`
+  uses HTTPS, otherwise the TLS handshake fails without SNI.
 - The PostGIS path was verified against `postgis/postgis:16-3.4` under Docker.
 - The deployed stack runs from `~/roadsense` on the home server under Compose
   project `roadsense`, using Docker 29.8.0 and Compose 5.5.1. PostgreSQL is not
@@ -131,15 +150,16 @@ path but shows that field false-positive tuning is still required.
   and are marked failed.
 - SQLite fallback is development-only; production should use PostGIS.
 - Repair status is stored data, not inferred or automatically refreshed.
-- Geocoding depends on external Nominatim availability and policy limits.
-- Edge rate limiting and caching for public reads and geocoding are recommended
-  before high-traffic deployment.
+- Geocoding depends on external providers: Nominatim for PIN lookup and MapTiler
+  for reverse geocoding. Nominatim returned HTTP 403 from the verification
+  network; MapTiler succeeded with an origin-appropriate `Referer`. Configure
+  `MAPTILER_API_KEY` and, for an origin-restricted key, `MAPTILER_REFERER`.
+  Provider failures are cached as failed with retry backoff instead of blocking
+  public reads.
+- Edge rate limiting and caching for public reads and provider calls are
+  recommended before high-traffic deployment.
 - A production deployment should replace the example secrets, restrict CORS,
   enable HTTPS, and back up the PostGIS volume.
-- The live Nominatim lookup was blocked from the verification network during the
-  final connectivity run (HTTP 403 from the provider); the endpoint, frontend
-  PIN flow, and mocked geocoder tests pass. Configure a permitted
-  `GEOCODING_USER_AGENT`/provider for the home server.
 - Deployed vector basemap verification requires a MapTiler or Stadia key for the
   non-local origin. The keyless Stadia style works only on localhost; without a
   deployed key the canonical pothole layers still render over the fallback background.
