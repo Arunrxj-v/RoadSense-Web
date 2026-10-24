@@ -2158,6 +2158,25 @@ svg {
   line-height: 16px;
 }
 
+.research-evidence {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--surface-low);
+  border-left: 2px solid var(--primary);
+  border-radius: 4px;
+}
+
+.research-evidence blockquote {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--primary);
+}
+
+.research-pending {
+  align-items: center;
+}
+
 .contract-provenance {
   display: flex;
   flex-wrap: wrap;

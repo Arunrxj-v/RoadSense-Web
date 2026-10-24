@@ -6,10 +6,12 @@ import {
   potholePincode,
   potholeRoadPrimaryLabel,
   potholeRoadSecondaryLabel,
+  researchPresentation,
+  researchReference,
   roadPrimaryLabel,
   verificationPresentation,
 } from './format'
-import type { PotholeLocation, PotholeSummary, RoadSummary } from './types'
+import type { ContractResearch, PotholeLocation, PotholeSummary, RoadSummary } from './types'
 
 const road: RoadSummary = {
   id: 1,
@@ -107,6 +109,36 @@ describe('public formatting helpers', () => {
   it('combines road name and number for the ledger', () => {
     expect(roadPrimaryLabel(road)).toBe('MC Road (SH 1)')
     expect(roadPrimaryLabel(null)).toBe('Road information unavailable')
+  })
+
+  it('maps automated research to a clear provenance label', () => {
+    const base: ContractResearch = {
+      status: 'completed',
+      match: true,
+      confidence: 'high',
+      contractor: 'ABC Constructions',
+      work_title: 'Road resurfacing',
+      authority: 'Kerala PWD',
+      tender_number: 'PWD/2025/12',
+      work_reference: null,
+      source_url: 'https://pwd.kerala.gov.in/work/1',
+      source_title: 'Kerala PWD work record',
+      evidence: 'Kerala PWD awarded the work to ABC Constructions.',
+      reason: 'Explicit match.',
+      researched_at: '2026-10-24T10:00:00Z',
+    }
+    expect(researchPresentation(base).label).toBe('Verified contractor')
+    expect(researchPresentation({ ...base, confidence: 'medium' }).label).toBe(
+      'Possible related work record',
+    )
+    expect(
+      researchPresentation({ ...base, confidence: 'medium', contractor: null }).detail,
+    ).toContain('related work or tender record')
+    expect(researchPresentation({ ...base, match: false }).label).toBe('No verified record')
+    expect(researchPresentation({ ...base, status: 'pending' }).label).toBe('Research pending')
+    expect(researchPresentation(null).label).toBe('Research not started')
+    expect(researchReference(base)).toBe('PWD/2025/12')
+    expect(researchReference({ ...base, tender_number: null, work_reference: 'WO-1' })).toBe('WO-1')
   })
 
   it('maps project verification status to a provenance label', () => {

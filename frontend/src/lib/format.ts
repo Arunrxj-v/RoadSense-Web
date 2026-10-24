@@ -1,4 +1,4 @@
-import type { PotholeSummary, Project, RoadSummary } from './types'
+import type { ContractResearch, PotholeSummary, Project, RoadSummary } from './types'
 
 const IST = 'Asia/Kolkata'
 
@@ -229,6 +229,58 @@ export function verificationPresentation(project: Project | null): VerificationP
         tone: 'unknown',
       }
   }
+}
+
+export function researchPresentation(
+  research: ContractResearch | null | undefined,
+): VerificationPresentation {
+  if (!research || research.status === 'none') {
+    return {
+      label: 'Research not started',
+      detail: 'Automated public-record research has not started for this pothole.',
+      tone: 'unknown',
+    }
+  }
+  if (research.status === 'pending' || research.status === 'running') {
+    return {
+      label: 'Research pending',
+      detail: 'RoadSense is checking public government and official records in the background.',
+      tone: 'unknown',
+    }
+  }
+  if (research.status === 'failed') {
+    return {
+      label: 'Research unavailable',
+      detail: research.reason || 'Automated research could not be completed.',
+      tone: 'unknown',
+    }
+  }
+  if (research.match && research.confidence === 'high') {
+    return {
+      label: 'Verified contractor',
+      detail: 'A cited government or official source explicitly links this road to the contractor.',
+      tone: 'verified',
+    }
+  }
+  if (research.match && research.confidence === 'medium') {
+    return {
+      label: 'Possible related work record',
+      detail: research.contractor
+        ? 'A cited source mentions this road and contractor, but the connection should be reviewed.'
+        : 'A cited source lists a related work or tender record for this road; verify the official record.',
+      tone: 'unknown',
+    }
+  }
+  return {
+    label: 'No verified record',
+    detail: research.reason || 'No source-backed contractor record was found for this road.',
+    tone: 'unknown',
+  }
+}
+
+export function researchReference(research: ContractResearch | null | undefined): string {
+  if (!research) return 'Not recorded'
+  return research.tender_number || research.work_reference || 'Not recorded'
 }
 
 export function projectReference(project: Project | null): string {

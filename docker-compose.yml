@@ -45,6 +45,14 @@ services:
       DEDUPE_RADIUS_M: ${DEDUPE_RADIUS_M:-25}
       DEDUPE_WINDOW_DAYS: ${DEDUPE_WINDOW_DAYS:-45}
       ROAD_MATCH_RADIUS_M: ${ROAD_MATCH_RADIUS_M:-30}
+      RESEARCH_ENABLED: ${RESEARCH_ENABLED:-true}
+      RESEARCH_ADMIN_KEY: ${RESEARCH_ADMIN_KEY:-}
+      SEARXNG_URL: ${SEARXNG_URL:-http://searxng:8080}
+      SEARXNG_ENGINES: ${SEARXNG_ENGINES:-yep}
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      RESEARCH_MODEL: ${RESEARCH_MODEL:-qwen3:0.6b}
+      RESEARCH_CACHE_DAYS: ${RESEARCH_CACHE_DAYS:-30}
+      RESEARCH_FAILED_RETRY_SECONDS: ${RESEARCH_FAILED_RETRY_SECONDS:-3600}
     depends_on:
       db:
         condition: service_healthy
@@ -60,6 +68,92 @@ services:
       retries: 10
     expose:
       - "5000"
+
+  searxng:
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080/
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?set SEARXNG_SECRET in .env}
+    volumes:
+      - ./searxng:/etc/searxng:ro
+      - roadsense_searxng_cache:/var/cache/searxng
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      OLLAMA_KEEP_ALIVE: "5m"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+    volumes:
+      - roadsense_ollama:/root/.ollama
+    expose:
+      - "11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  ollama-init:
+    image: ollama/ollama:latest
+    restart: "no"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["ollama pull ${RESEARCH_MODEL:-qwen3:0.6b}"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  research-worker:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://roadsense:${POSTGRES_PASSWORD}@db:5432/roadsense
+      AUTO_INIT_DB: "false"
+      RUN_DB_INIT: "false"
+      RESEARCH_ENABLED: ${RESEARCH_ENABLED:-true}
+      RESEARCH_ADMIN_KEY: ${RESEARCH_ADMIN_KEY:-}
+      SEARXNG_URL: ${SEARXNG_URL:-http://searxng:8080}
+      SEARXNG_ENGINES: ${SEARXNG_ENGINES:-yep}
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      RESEARCH_MODEL: ${RESEARCH_MODEL:-qwen3:0.6b}
+      RESEARCH_USER_AGENT: ${RESEARCH_USER_AGENT:-RoadSenseResearch/1.0 (public road records research)}
+      RESEARCH_MAX_QUERIES: ${RESEARCH_MAX_QUERIES:-10}
+      RESEARCH_MAX_FETCHES: ${RESEARCH_MAX_FETCHES:-5}
+      RESEARCH_MAX_SOURCE_CHARS: ${RESEARCH_MAX_SOURCE_CHARS:-3000}
+      RESEARCH_MAX_CONTEXT_CHARS: ${RESEARCH_MAX_CONTEXT_CHARS:-9000}
+      RESEARCH_MAX_HTML_BYTES: ${RESEARCH_MAX_HTML_BYTES:-3000000}
+      RESEARCH_MAX_PDF_BYTES: ${RESEARCH_MAX_PDF_BYTES:-8000000}
+      RESEARCH_MAX_DURATION_SECONDS: ${RESEARCH_MAX_DURATION_SECONDS:-180}
+      RESEARCH_SEARCH_DELAY_SECONDS: ${RESEARCH_SEARCH_DELAY_SECONDS:-0.8}
+      RESEARCH_FETCH_DELAY_SECONDS: ${RESEARCH_FETCH_DELAY_SECONDS:-1.2}
+      RESEARCH_OLLAMA_TIMEOUT_SECONDS: ${RESEARCH_OLLAMA_TIMEOUT_SECONDS:-120}
+      RESEARCH_OLLAMA_NUM_CTX: ${RESEARCH_OLLAMA_NUM_CTX:-4096}
+      RESEARCH_OLLAMA_NUM_PREDICT: ${RESEARCH_OLLAMA_NUM_PREDICT:-512}
+      RESEARCH_WORKER_POLL_SECONDS: ${RESEARCH_WORKER_POLL_SECONDS:-5}
+      RESEARCH_ALLOWED_PORTS: ${RESEARCH_ALLOWED_PORTS:-80,443}
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      searxng:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    command: ["python", "-m", "services.research_worker"]
 
   frontend:
     build:
@@ -82,3 +176,5 @@ services:
 
 volumes:
   roadsense_pgdata:
+  roadsense_ollama:
+  roadsense_searxng_cache:

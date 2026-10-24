@@ -138,11 +138,131 @@ def pothole_summary(pothole):
     }
 
 
-def pothole_detail(pothole, related=None):
+def research_public(run):
+    if run is None:
+        return {
+            "status": "none",
+            "match": None,
+            "confidence": "none",
+            "contractor": None,
+            "work_title": None,
+            "authority": None,
+            "tender_number": None,
+            "work_reference": None,
+            "source_url": None,
+            "source_title": None,
+            "evidence": None,
+            "reason": None,
+            "researched_at": None,
+        }
+    if run.status in {"pending", "running"}:
+        return {
+            "status": run.status,
+            "match": None,
+            "confidence": "none",
+            "contractor": None,
+            "work_title": None,
+            "authority": None,
+            "tender_number": None,
+            "work_reference": None,
+            "source_url": None,
+            "source_title": None,
+            "evidence": None,
+            "reason": None,
+            "researched_at": None,
+        }
+    if run.status == "failed":
+        return {
+            "status": "failed",
+            "match": False,
+            "confidence": "none",
+            "contractor": None,
+            "work_title": None,
+            "authority": None,
+            "tender_number": None,
+            "work_reference": None,
+            "source_url": None,
+            "source_title": None,
+            "evidence": None,
+            "reason": "Research could not be completed. Cached road metadata remains available.",
+            "researched_at": iso_utc(run.completed_at),
+        }
+    confidence = run.confidence if run.confidence in {"high", "medium"} else "none"
+    matched = bool(run.match and confidence != "none")
+    return {
+        "status": "completed",
+        "match": matched,
+        "confidence": confidence if matched else "none",
+        "contractor": run.contractor if matched else None,
+        "work_title": run.work_title if matched else None,
+        "authority": run.authority if matched else None,
+        "tender_number": run.tender_number if matched else None,
+        "work_reference": run.work_reference if matched else None,
+        "source_url": run.source_url if matched else None,
+        "source_title": run.source_title if matched else None,
+        "evidence": run.evidence if matched else None,
+        "reason": run.reason,
+        "researched_at": iso_utc(run.completed_at),
+    }
+
+
+def research_debug_payload(run):
+    if run is None:
+        return None
+    return {
+        "id": run.id,
+        "status": run.status,
+        "research_key": run.research_key,
+        "match": run.match,
+        "confidence": run.confidence,
+        "contractor": run.contractor,
+        "work_title": run.work_title,
+        "authority": run.authority,
+        "tender_number": run.tender_number,
+        "work_reference": run.work_reference,
+        "source_url": run.source_url,
+        "source_title": run.source_title,
+        "evidence": run.evidence,
+        "reason": run.reason,
+        "error": run.error,
+        "model": run.model,
+        "queries": run.queries_json or [],
+        "query_count": run.query_count,
+        "result_count": run.result_count,
+        "fetched_source_count": run.fetched_source_count,
+        "selected_source_count": run.selected_source_count,
+        "search_ms": run.search_ms,
+        "fetch_ms": run.fetch_ms,
+        "ollama_ms": run.ollama_ms,
+        "total_ms": run.total_ms,
+        "started_at": iso_utc(run.started_at),
+        "completed_at": iso_utc(run.completed_at),
+        "sources": [
+            {
+                "query": source.search_query,
+                "rank": source.rank,
+                "title": source.title,
+                "url": source.url,
+                "domain": source.domain,
+                "tier": source.tier,
+                "snippet": source.snippet,
+                "fetch_status": source.fetch_status,
+                "fetched": source.fetched,
+                "selected": source.selected,
+                "text_chars": source.text_chars,
+                "error": source.error,
+            }
+            for source in (run.sources or [])
+        ],
+    }
+
+
+def pothole_detail(pothole, related=None, research=None):
     data = pothole_summary(pothole)
     data["road"] = road_detail(pothole.road)
     project = pothole.road.project if pothole.road else None
     data["project"] = project_public(project)
+    data["research"] = research_public(research)
     data["related"] = [pothole_summary(item) for item in (related or [])]
     return data
 

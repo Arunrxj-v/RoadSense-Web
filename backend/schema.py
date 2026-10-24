@@ -61,6 +61,8 @@ def init_database(app):
     from models import (  # noqa: F401
         DetectionReport,
         PotholeLocationMetadata,
+        PotholeResearchRun,
+        PotholeResearchSource,
         RoadProject,
         RoadSegment,
     )

@@ -1,0 +1,33 @@
+use_default_settings: true
+
+general:
+  instance_name: "RoadSense Research"
+
+server:
+  limiter: false
+  public_instance: false
+  image_proxy: false
+
+search:
+  safe_search: 1
+  autocomplete: ""
+  default_lang: "en"
+  formats:
+    - html
+    - json
+
+engines:
+  - name: google
+    disabled: true
+  - name: google cse
+    disabled: true
+  - name: brave
+    disabled: true
+  - name: duckduckgo
+    disabled: true
+  - name: duckduckgo web
+    disabled: true
+  - name: bing
+    disabled: true
+  - name: yep
+    disabled: false

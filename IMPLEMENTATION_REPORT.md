@@ -18,7 +18,10 @@ references, so the backend and frontend were both built in this phase.
   responsive card layout, and explicit empty/error states.
 - Pothole detail page with canonical record metadata, cached reverse-geocoded
   address/road data, micro-location inset, provenance-aware contract record,
-  verification labels, and source link.
+  verification labels, source link, and background research status.
+- Research result panel that distinguishes a verified contractor (`high`) from a
+  possible related work/tender record (`medium`, including records without a
+  contractor) and an unverified/no-record result.
 - About and Public Data Note pages, plus a branded 404 page.
 - Responsive layouts checked at 1440 px, 834 px, and 390 px widths.
 - No internal stack names, credentials, camera media, or raw sensor data are
@@ -36,6 +39,13 @@ references, so the backend and frontend were both built in this phase.
   `enrich-locations` CLI. Public reads never call the provider.
 - PostGIS geometry/geography columns, GiST indexes, and sync triggers for
   production; SQLite fallback for development and tests.
+- Self-hosted public-record research pipeline: deterministic road/locality
+  queries, private SearXNG search, SSRF-safe HTML/PDF fetching, strict JSON
+  extraction with local Ollama (`qwen3:0.6b`), deterministic validation, source
+  ranking, road-alias matching, caching, and a DB-backed async worker.
+- Research provenance in `pothole_research_runs` and
+  `pothole_research_sources`, separate from canonical potholes; public reads
+  expose only the latest stored run.
 - Public serializers deliberately omit internal identifiers and raw reports.
 - Contractor names are only emitted for source-backed `verified` or `unverified`
   records; a `verified` record without provenance is downgraded to `unknown`.
@@ -45,9 +55,11 @@ references, so the backend and frontend were both built in this phase.
 - Multi-stage frontend image served by nginx with SPA fallback, immutable asset
   caching, security headers, and `/api/` reverse proxy.
 - Gunicorn backend image with one-time entrypoint schema initialisation.
-- Docker Compose stack with PostGIS, backend, and frontend. The Flask API is
-  published on the home server at a configurable `API_BIND_ADDRESS:API_PORT`
-  (default `0.0.0.0:5001`); PostgreSQL remains internal to the Compose network.
+- Docker Compose stack with PostGIS, backend, frontend, private SearXNG,
+  private Ollama plus a one-time model pull, and a research worker. The Flask API
+  is published on the home server at a configurable
+  `API_BIND_ADDRESS:API_PORT` (default `0.0.0.0:5001`); PostgreSQL, SearXNG, and
+  Ollama remain internal to the Compose network.
 - The browser-facing API base is centralized in `frontend/src/lib/api.ts` and
   uses the same-origin `/api/v1` path. Vite proxies `/api` to Flask during
   development, and the bundled nginx proxies `/api/` in production.
@@ -61,8 +73,8 @@ references, so the backend and frontend were both built in this phase.
 
 | Check | Result |
 | --- | --- |
-| Backend test suite (`pytest -q`) | 22 passed |
-| Frontend unit tests (`npm test`) | 13 passed |
+| Backend test suite (`pytest -q`) | 41 passed |
+| Frontend unit tests (`npm test`) | 14 passed |
 | Frontend typecheck (`npm run typecheck`) | passed |
 | Frontend lint (`npm run lint`) | passed |
 | Frontend production build (`npm run build`) | passed |
@@ -84,6 +96,11 @@ references, so the backend and frontend were both built in this phase.
 | Vector map migration | MapLibre GL JS with Stadia keyless localhost basemap; cluster expansion, point selection, PIN fly-to, detail inset, and mobile layout checked; no console/page errors |
 | Production vector map | Vite build emitted the MapLibre worker asset; preview at `127.0.0.1:5174` loaded the basemap, canonical feed (2 records), cluster expansion, selected preview card, and detail inset with no console/page errors |
 | Responsive review | desktop, tablet, and mobile screenshots inspected |
+| Research pipeline tests | query generation, road aliases, source ranking, aggregator handling, strict validation, and no-contractor work records passed |
+| Deployed research services | SearXNG, Ollama, model pull, backend, and research worker healthy; `qwen3:0.6b` loaded |
+| Deployed research result | `PH-000003` completed at `medium` from TenderShark with tender `2026_PWD_838718_1`, work reference `PWD/RB/TR/12265/2025_5_2_1/1`, authority PWD, and no contractor |
+| Async research worker | forced admin enqueue created run 5, worker claimed it, and it completed at `medium` with 10 queries, 3 fetched sources, and 3 selected sources |
+| Public research API | `GET /api/v1/potholes/PH-000003` returned `completed`/`medium` with `contractor: null` and the cited source URL |
 
 The local browser checks used a test database. The original deployed browser check used
 temporary records that were deleted afterward; subsequent fleet data has since produced
@@ -120,6 +137,17 @@ path but shows that field false-positive tuning is still required.
 - **One-time schema initialisation**: gunicorn workers do not race to create
   tables; Compose initialises once in the entrypoint, and production can run
   `init-db` as a separate deploy step.
+- **Local model, deterministic guardrails**: Ollama extracts facts from fetched
+  text only; it never searches the web. The backend generates queries, enforces
+  fetch/SSRF/size/time limits, validates the cited source and road match, and
+  computes confidence. A `high` result requires an explicit official-source
+  contractor link; tender aggregators can only support `medium`.
+- **No CAPTCHA bypass**: when an official portal requires CAPTCHA, the pipeline
+  records the accessible related source as `medium` and tells the reader to
+  verify the official record. It does not attempt to circumvent the control.
+- **DB-backed async research**: a small worker claims pending runs and recovers
+  stale `running` jobs without adding Redis/Celery to the resource-constrained
+  home server.
 
 ## Environment notes
 
@@ -139,6 +167,14 @@ path but shows that field false-positive tuning is still required.
   published to the host; the API and web UI bind only to the Tailscale address.
 - Automated browser verification used a temporary Playwright install outside the
   project; Playwright is not a project dependency.
+- Research runs on the same Compose network as the backend. SearXNG uses the
+  `yep` engine by default; DuckDuckGo returned CAPTCHA pages, Bing returned
+  generic results, and the official eTenders archive required CAPTCHA. The
+  deployed stack therefore does not claim official primary-source verification
+  for `PH-000003`.
+- The home server has 4 CPU cores and about 3.3 GiB RAM. Ollama is limited to one
+  loaded model, one parallel request, and a 5-minute keep-alive; a research run
+  takes roughly 50–90 seconds.
 
 ## Known limitations and next steps
 
@@ -158,6 +194,11 @@ path but shows that field false-positive tuning is still required.
   public reads.
 - Edge rate limiting and caching for public reads and provider calls are
   recommended before high-traffic deployment.
+- Research coverage depends on public search results. Some works are only
+  discoverable through tender aggregators, which remain `medium` until a
+  government/official record is verified. The small local model can return
+  invalid JSON on weak source context; that is stored as a failed run rather
+  than guessed data.
 - A production deployment should replace the example secrets, restrict CORS,
   enable HTTPS, and back up the PostGIS volume.
 - Deployed vector basemap verification requires a MapTiler or Stadia key for the

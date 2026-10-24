@@ -1,6 +1,7 @@
 """RoadSense Vision public API application factory."""
 import logging
 
+import click
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
@@ -115,6 +116,47 @@ def create_app(config_object=None):
     from services.location_enrichment import register_cli
 
     register_cli(app)
+
+    @app.cli.command("research-pothole")
+    @click.argument("pothole_id")
+    @click.option("--force", is_flag=True, help="Ignore the cached result.")
+    def research_pothole_command(pothole_id, force):
+        """Research one pothole and print the stored outcome."""
+        from db import db
+        from models import CanonicalPothole, parse_public_id
+        from services.research_agent import enqueue_research, execute_research_run
+
+        numeric_id = parse_public_id(pothole_id)
+        if numeric_id is None:
+            raise click.ClickException("Invalid pothole identifier.")
+        pothole = db.session.get(CanonicalPothole, numeric_id)
+        if pothole is None:
+            raise click.ClickException("Pothole not found.")
+        run = enqueue_research(pothole, force=force)
+        if run is None:
+            raise click.ClickException("Research is disabled or location metadata is missing.")
+        if run.status == "pending":
+            execute_research_run(run.id)
+            db.session.refresh(run)
+        click.echo(
+            "{0}: status={1} confidence={2} contractor={3}".format(
+                pothole.public_id, run.status, run.confidence, run.contractor or "-"
+            )
+        )
+
+    @app.cli.command("research-pending")
+    @click.option("--limit", default=1, type=int)
+    def research_pending_command(limit):
+        """Run up to LIMIT pending research jobs."""
+        from services.research_agent import execute_research_run
+        from services.research_worker import claim_next_run
+
+        for _ in range(max(1, limit)):
+            run = claim_next_run()
+            if run is None:
+                break
+            execute_research_run(run.id)
+            click.echo("research run {0} finished".format(run.id))
 
     if app.config.get("AUTO_INIT_DB"):
         try:

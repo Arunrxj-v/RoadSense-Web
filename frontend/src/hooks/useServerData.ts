@@ -22,8 +22,14 @@ export function usePotholeDetail(id: string | null) {
     queryFn: ({ signal }) => fetchPothole(id as string, signal),
     enabled: Boolean(id),
     staleTime: 30_000,
-    refetchInterval: (query) =>
-      query.state.data?.location?.status === 'pending' ? 4_000 : false,
+    refetchInterval: (query) => {
+      const data = query.state.data
+      if (data?.location?.status === 'pending') return 4_000
+      if (data?.research?.status === 'pending' || data?.research?.status === 'running') {
+        return 5_000
+      }
+      return false
+    },
     retry: 1,
   })
 }

@@ -15,6 +15,7 @@ from models import (
     parse_public_id,
 )
 from services import geocoding
+from services.research_agent import enqueue_research, latest_research_run
 from services.serializers import (
     iso_utc,
     meta_payload,
@@ -315,6 +316,14 @@ def get_pothole(pothole_id):
     if not pothole:
         return error("That pothole could not be found.", 404)
 
+    try:
+        enqueue_research(pothole)
+    except Exception:
+        current_app.logger.exception(
+            "Could not enqueue research for pothole %s", pothole.public_id
+        )
+    research = latest_research_run(pothole)
+
     related = []
     if pothole.road_id:
         related = (
@@ -326,7 +335,7 @@ def get_pothole(pothole_id):
             .limit(4)
             .all()
         )
-    return jsonify(pothole_detail(pothole, related))
+    return jsonify(pothole_detail(pothole, related, research))
 
 
 @public_api.get("/roads/<int:road_id>")
