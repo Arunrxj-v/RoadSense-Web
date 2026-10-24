@@ -1156,6 +1156,37 @@ svg {
   flex-shrink: 0;
 }
 
+.contract-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.button--compact {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.button--compact .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.button--compact:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.research-refresh-error {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--accent);
+}
+
 /* Detections ledger */
 .ledger-hero {
   background: var(--surface-low);

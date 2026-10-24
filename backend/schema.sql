@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS pothole_research_sources (
   selected BOOLEAN NOT NULL DEFAULT false,
   text_chars INTEGER,
   error VARCHAR(64),
+  retrieved_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

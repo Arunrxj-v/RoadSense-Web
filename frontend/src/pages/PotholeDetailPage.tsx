@@ -6,7 +6,7 @@ import { Icon } from '../components/Icon'
 import { MiniMap } from '../components/MiniMap'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import { usePotholeDetail } from '../hooks/useServerData'
-import { apiErrorMessage, potholePath } from '../lib/api'
+import { apiErrorMessage, potholePath, refreshPotholeResearch } from '../lib/api'
 import {
   bearingLabel,
   confidencePercent,
@@ -32,6 +32,8 @@ export function PotholeDetailPage() {
   const detail = usePotholeDetail(id || null)
   const pothole = detail.data
   const [copied, setCopied] = useState(false)
+  const [refreshBusy, setRefreshBusy] = useState(false)
+  const [refreshError, setRefreshError] = useState('')
 
   useDocumentMeta({
     title: pothole
@@ -41,6 +43,20 @@ export function PotholeDetailPage() {
       ? `Public road condition record ${pothole.id} at ${locationTitle(pothole)}, with ${pothole.report_count} observations.`
       : 'Public road condition record from RoadSense.',
   })
+
+  const refreshResearch = async () => {
+    if (!pothole || refreshBusy) return
+    setRefreshBusy(true)
+    setRefreshError('')
+    try {
+      await refreshPotholeResearch(pothole.id)
+      await detail.refetch()
+    } catch (error) {
+      setRefreshError(apiErrorMessage(error))
+    } finally {
+      setRefreshBusy(false)
+    }
+  }
 
   const copyCoordinates = async () => {
     if (!pothole) return
@@ -345,8 +361,25 @@ export function PotholeDetailPage() {
                   <h2>Road work &amp; contract record</h2>
                   <p>Public work records found through cited government and official sources.</p>
                 </div>
-                <span className={`chip chip--${contractView.tone}`}>{contractView.label}</span>
+                <div className="contract-head-actions">
+                  <span className={`chip chip--${contractView.tone}`}>{contractView.label}</span>
+                  {research && research.status !== 'none' ? (
+                    <button
+                      type="button"
+                      className="button button--secondary button--compact"
+                      onClick={() => void refreshResearch()}
+                      disabled={refreshBusy || researchActive}
+                    >
+                      <Icon name="refresh" size={16} />
+                      {researchActive ? 'Researching…' : refreshBusy ? 'Starting…' : 'Research again'}
+                    </button>
+                  ) : null}
+                </div>
               </div>
+
+              {refreshError ? (
+                <p className="research-refresh-error" role="alert">{refreshError}</p>
+              ) : null}
 
               {researchActive ? (
                 <div className="contract-unavailable research-pending">
@@ -482,7 +515,7 @@ export function PotholeDetailPage() {
                   <div>
                     <h3>
                       {research?.status === 'failed'
-                        ? 'Research could not be completed'
+                        ? 'Research temporarily unavailable'
                         : 'No verified contractor record found'}
                     </h3>
                     <p>

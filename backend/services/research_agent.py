@@ -20,6 +20,18 @@ from services.research_target import (
 )
 from services.search_provider import SearchError, SearXNGProvider
 
+ROAD_CONTEXT_TERMS = (
+    "road",
+    "rd",
+    "street",
+    "st",
+    "lane",
+    "marg",
+    "highway",
+    "path",
+    "bypass",
+    "avenue",
+)
 WORK_TERMS = (
     "contractor",
     "awarded",
@@ -62,6 +74,7 @@ SECONDARY_DOMAINS = {
     "timesofindia.indiatimes.com",
     "ndtv.com",
 }
+NO_MATCH_REASON = "No source-backed road work record found."
 TENDER_AGGREGATOR_DOMAINS = {
     "gittigo.com",
     "tendershark.com",
@@ -79,47 +92,61 @@ def _quote_term(value):
     return '"' + normalize_text(value).replace('"', "") + '"'
 
 
-def generate_queries(target, max_queries=10):
+def _official_domains(target):
+    state_key = normalize_key(target.state)
+    if state_key == "kerala":
+        return [
+            "kerala.gov.in",
+            "pwd.kerala.gov.in",
+            "etenders.kerala.gov.in",
+            "gov.in",
+        ]
+    return ["gov.in", "nic.in"]
+
+
+def generate_queries(target, max_queries=12):
     aliases = road_aliases(target)
     if not aliases:
         return []
     road = _quote_term(aliases[0])
+    base = _quote_term(aliases[1]) if len(aliases) > 1 else road
     locality = _quote_term(target.locality) if target.locality else ""
     district = _quote_term(target.district) if target.district else ""
     state = _quote_term(target.state) if target.state else ""
+    municipality = (
+        _quote_term(target.municipality) if target.municipality else ""
+    )
+    authority = _quote_term(target.authority) if target.authority else ""
     place = " ".join(part for part in (locality, district, state) if part)
-    short_place = normalize_text(target.locality or target.district)
     queries = [
         "{0} {1} contractor".format(road, place).strip(),
         "{0} {1} tender".format(road, place).strip(),
         "{0} {1} road work".format(road, place).strip(),
-        "{0} {1} PWD".format(road, place).strip(),
     ]
-    if len(aliases) > 1:
+    if base and base != road and locality:
+        queries.append("{0} {1} tender".format(base, locality).strip())
+    for domain in _official_domains(target):
         queries.append(
-            "{0} {1} tender".format(_quote_term(aliases[1]), locality).strip()
+            "site:{0} {1} {2}".format(domain, road, locality or district).strip()
         )
-    if len(aliases) > 3:
+    if target.pincode:
         queries.append(
-            "{0} {1} tender".format(_quote_term(aliases[3]), locality).strip()
+            "{0} {1} tender".format(road, target.pincode).strip()
         )
-    queries.extend(
-        [
-            'site:kerala.gov.in {0} {1}'.format(road, locality).strip(),
-            "site:pwd.kerala.gov.in {0}".format(road),
-            'site:etenders.kerala.gov.in {0} {1}'.format(
-                _quote_term(aliases[-1]), short_place
-            ).strip(),
-        ]
-    )
-    if len(aliases) > 1:
+    if municipality:
         queries.append(
-            "{0} {1} improvements of village roads".format(
-                _quote_term(aliases[1]), locality
-            ).strip()
+            "{0} {1} tender".format(road, municipality).strip()
         )
+    if authority:
+        queries.append("{0} {1} work".format(road, authority).strip())
+    if district:
+        queries.append(
+            "{0} {1} government tender".format(road, district).strip()
+        )
+    if state:
+        queries.append("{0} {1} PWD tender".format(road, state).strip())
     queries.append(
-        'site:gov.in {0} {1} contractor'.format(road, locality).strip()
+        "site:gov.in {0} {1} contractor".format(road, locality or district).strip()
     )
     seen = set()
     result = []
@@ -131,7 +158,6 @@ def generate_queries(target, max_queries=10):
         if len(result) >= max_queries:
             break
     return result
-
 
 def _domain_of(url):
     try:
@@ -197,12 +223,23 @@ def _dedupe_candidates(hits, target):
                 "tier": _tier_for_domain(domain),
             }
         )
+
     def rank_key(item):
         hit = item["hit"]
         text = "{0} {1}".format(hit.title, hit.snippet)
-        road = _road_mentioned(text, target)
+        road = _road_name_mentioned(text, target)
         work = _has_work_term(text)
-        relevance = 0 if road and work else 1 if road else 2
+        location = _has_strong_location(text, target)
+        if road and work and location:
+            relevance = 0
+        elif road and work:
+            relevance = 1
+        elif road and location:
+            relevance = 2
+        elif road:
+            relevance = 3
+        else:
+            relevance = 4
         return (relevance, item["tier"], hit.rank, -hit.score)
 
     candidates.sort(key=rank_key)
@@ -229,26 +266,88 @@ def _is_tender_aggregator(domain):
     )
 
 
-def _road_mentioned(text, target):
+def _road_name_mentioned(text, target):
     normalized_text = normalize_key(text)
     if not normalized_text:
         return False
     full = normalize_key(target.road_name)
     if full and full in normalized_text:
         return True
-    place_tokens = [
-        normalize_key(value)
-        for value in (target.locality, target.district)
-        if normalize_key(value)
-    ]
-    if not place_tokens:
+    return any(
+        normalize_key(alias) in normalized_text
+        for alias in road_match_aliases(target)
+        if normalize_key(alias)
+    )
+
+
+def _has_road_context(text):
+    padded = " {0} ".format(normalize_key(text))
+    return any(" {0} ".format(term) in padded for term in ROAD_CONTEXT_TERMS)
+
+
+def _has_strong_location(text, target):
+    normalized_text = normalize_key(text)
+    if not normalized_text:
         return False
-    for alias in road_match_aliases(target):
-        alias_key = normalize_key(alias)
-        if alias_key and alias_key in normalized_text:
-            if any(token in normalized_text for token in place_tokens):
-                return True
+    for value in (
+        target.locality,
+        target.district,
+        target.pincode,
+        target.municipality,
+        target.administrative_area,
+        target.suburb,
+    ):
+        token = normalize_key(value)
+        if token and token in normalized_text:
+            return True
     return False
+
+
+def _road_mentioned(text, target):
+    normalized_text = normalize_key(text)
+    if not normalized_text:
+        return False
+    if not _has_strong_location(text, target):
+        return False
+    full = normalize_key(target.road_name)
+    if full and full in normalized_text:
+        return True
+    if not _has_road_context(text):
+        return False
+    return any(
+        normalize_key(alias) in normalized_text
+        for alias in road_match_aliases(target)
+        if normalize_key(alias)
+    )
+
+
+def _authority_mentioned(text, authority):
+    normalized_text = normalize_key(text)
+    normalized_authority = normalize_key(authority)
+    if not normalized_text or not normalized_authority:
+        return False
+    if normalized_authority in normalized_text:
+        return True
+    generic = {
+        "public",
+        "works",
+        "department",
+        "government",
+        "state",
+        "kerala",
+        "india",
+        "the",
+        "and",
+    }
+    tokens = [
+        token
+        for token in normalized_authority.split()
+        if len(token) > 2 and token not in generic
+    ]
+    if not tokens:
+        return False
+    text_tokens = set(normalized_text.split())
+    return any(token in text_tokens for token in tokens)
 
 
 def _name_mentioned(text, name):
@@ -281,7 +380,7 @@ def _focus_text(text, target, max_chars):
         return ""
     selected = []
     for index, line in enumerate(lines):
-        if _road_mentioned(line, target):
+        if _road_name_mentioned(line, target):
             start = max(0, index - 3)
             end = min(len(lines), index + 5)
             selected.extend(lines[start:end])
@@ -414,6 +513,8 @@ def validate_model_result(result, target, source_entries):
         work_reference = ""
     work_title = normalize_text(result.get("work_title"))
     authority = normalize_text(result.get("authority"))
+    if authority and not _authority_mentioned(source_text, authority):
+        authority = ""
     return {
         "match": True,
         "confidence": confidence,
@@ -547,11 +648,16 @@ def execute_research_run(run_id):
     config = current_app.config
     started = time.monotonic()
     deadline = started + config.get("RESEARCH_MAX_DURATION_SECONDS", 180)
-    max_queries = config.get("RESEARCH_MAX_QUERIES", 10)
+    max_queries = config.get("RESEARCH_MAX_QUERIES", 12)
     max_fetches = config.get("RESEARCH_MAX_FETCHES", 5)
     queries = generate_queries(target, max_queries)
+    search_engine_url = (
+        config.get("SEARCH_ENGINE_URL")
+        or config.get("SEARXNG_URL")
+        or "http://searxng:8080"
+    )
     search_provider = SearXNGProvider(
-        config.get("SEARXNG_URL", "http://searxng:8080"),
+        search_engine_url,
         config.get("RESEARCH_USER_AGENT", "RoadSenseResearch/1.0"),
         timeout=config.get("SEARXNG_TIMEOUT_SECONDS", 15),
         results_per_query=config.get("SEARXNG_RESULTS_PER_QUERY", 5),
@@ -574,6 +680,17 @@ def execute_research_run(run_id):
     run.query_count = len(queries)
     run.queries_json = []
     db.session.commit()
+    current_app.logger.info(
+        "RESEARCH start run=%s pothole=%s road=%r locality=%r district=%r "
+        "pincode=%r queries=%s",
+        run.id,
+        target.public_id,
+        target.road_name,
+        target.locality,
+        target.district,
+        target.pincode,
+        len(queries),
+    )
 
     hits = []
     query_log = []
@@ -586,20 +703,29 @@ def execute_research_run(run_id):
             found = search_provider.search(query)
             hits.extend(found)
             query_log.append({"query": query, "result_count": len(found)})
+            current_app.logger.info(
+                "SEARCH query=%r results=%s", query, len(found)
+            )
         except SearchError as exc:
             search_errors += 1
             query_log.append({"query": query, "result_count": 0, "error": exc.code})
+            current_app.logger.warning(
+                "SEARCH query=%r failed=%s", query, exc.code
+            )
         if index < len(queries) - 1:
             time.sleep(config.get("RESEARCH_SEARCH_DELAY_SECONDS", 0.8))
     run.search_ms = int((time.monotonic() - search_started) * 1000)
     run.queries_json = query_log
     db.session.commit()
+    current_app.logger.info(
+        "SEARCH RESULTS run=%s hits=%s errors=%s", run.id, len(hits), search_errors
+    )
 
     if not hits:
         if search_errors == len(queries):
             _fail_run(run, "search_failed")
         else:
-            _complete_no_match(run, "No public search results were found for this road.")
+            _complete_no_match(run, NO_MATCH_REASON)
         return
 
     candidates = _dedupe_candidates(hits, target)
@@ -607,7 +733,7 @@ def execute_research_run(run_id):
     db.session.commit()
     authoritative = [item for item in candidates if item["tier"] <= 3]
     if not authoritative:
-        _complete_no_match(run, "Search results did not include a government or official source.")
+        _complete_no_match(run, NO_MATCH_REASON)
         return
 
     fetch_started = time.monotonic()
@@ -641,12 +767,24 @@ def execute_research_run(run_id):
             continue
         source_row.fetched = True
         source_row.fetch_status = "ok"
+        source_row.retrieved_at = utcnow()
         source_row.url = page.url[:1024]
         source_row.domain = _domain_of(page.url)
         source_row.tier = _tier_for_domain(source_row.domain)
         source_row.title = (page.title or hit.title)[:512]
         source_row.text_chars = len(page.text)
-        text = "\n".join(part for part in (hit.snippet, page.text) if part)
+        current_app.logger.info(
+            "FETCH ok run=%s source=%s domain=%s chars=%s",
+            run.id,
+            source_row.id,
+            source_row.domain,
+            source_row.text_chars,
+        )
+        text = "\n".join(
+            part
+            for part in (hit.title, hit.snippet, page.title, page.text)
+            if part
+        )
         fetched.append(
             {
                 "id": "S{0}".format(len(fetched) + 1),
@@ -670,8 +808,14 @@ def execute_research_run(run_id):
         return
 
     relevant = [item for item in fetched if _road_mentioned(item["text"], target)]
+    current_app.logger.info(
+        "MATCH sources run=%s fetched=%s relevant=%s",
+        run.id,
+        len(fetched),
+        len(relevant),
+    )
     if not relevant:
-        _complete_no_match(run, "The fetched sources did not name the target road.")
+        _complete_no_match(run, NO_MATCH_REASON)
         return
 
     relevant.sort(
@@ -707,13 +851,19 @@ def execute_research_run(run_id):
         )
         remaining_context -= len(excerpt)
     if not prompt_sources:
-        _complete_no_match(run, "The fetched sources did not contain usable text.")
+        _complete_no_match(run, NO_MATCH_REASON)
         return
 
     if time.monotonic() >= deadline:
         _fail_run(run, "time_budget_exceeded")
         return
 
+    current_app.logger.info(
+        "OLLAMA extract run=%s model=%s sources=%s",
+        run.id,
+        config.get("RESEARCH_MODEL", "qwen3:0.6b"),
+        len(prompt_sources),
+    )
     ollama_started = time.monotonic()
     try:
         result = ollama.extract(target, prompt_sources)
@@ -741,9 +891,13 @@ def execute_research_run(run_id):
     db.session.commit()
 
     current_app.logger.info(
-        "Research run %s for %s completed: confidence=%s sources=%s",
+        "FINAL run=%s pothole=%s match=%s confidence=%s contractor=%s "
+        "authority=%s source=%s",
         run.id,
         target.public_id,
+        run.match,
         run.confidence,
-        run.selected_source_count,
+        bool(run.contractor),
+        run.authority,
+        run.source_url,
     )

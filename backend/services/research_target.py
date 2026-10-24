@@ -15,6 +15,10 @@ class ResearchTarget:
     pincode: str
     latitude: float
     longitude: float
+    authority: str = ""
+    municipality: str = ""
+    administrative_area: str = ""
+    suburb: str = ""
 
 
 def normalize_text(value):
@@ -42,6 +46,9 @@ def build_target(pothole):
     state = normalize_text(metadata.state if metadata else None)
     country = normalize_text(metadata.country if metadata else None)
     pincode = normalize_text(metadata.pincode if metadata else None)
+    authority = normalize_text(metadata.authority if metadata else None)
+    if not authority:
+        authority = normalize_text(pothole.road.authority if pothole.road else None)
     return ResearchTarget(
         pothole_id=pothole.id,
         public_id=pothole.public_id,
@@ -53,7 +60,22 @@ def build_target(pothole):
         pincode=pincode,
         latitude=pothole.latitude,
         longitude=pothole.longitude,
+        authority=authority,
+        municipality=normalize_text(metadata.municipality if metadata else None),
+        administrative_area=normalize_text(
+            metadata.administrative_area if metadata else None
+        ),
+        suburb=normalize_text(metadata.suburb if metadata else None),
     )
+
+
+def _without_road_suffix(value):
+    return re.sub(
+        r"\s+(road|rd|street|st|lane|marg|highway|path|bypass|avenue)$",
+        "",
+        normalize_text(value),
+        flags=re.IGNORECASE,
+    ).strip()
 
 
 def road_aliases(target):
@@ -64,17 +86,14 @@ def road_aliases(target):
     if not key:
         return []
     aliases = [road]
-    base = re.sub(r"\s+(road|rd|street|st)$", "", road, flags=re.IGNORECASE).strip()
-    if base and normalize_key(base) != key:
+    base = _without_road_suffix(road)
+    base_key = normalize_key(base)
+    if (
+        base
+        and base_key != key
+        and (len(base_key.split()) >= 2 or len(base_key) >= 10)
+    ):
         aliases.append(base)
-    if "engineering college" in key:
-        aliases.extend(
-            [
-                "Engineering College Back Road",
-                "Road behind IHRD Engineering College",
-                "IHRD Engineering College Road",
-            ]
-        )
     seen = set()
     result = []
     for alias in aliases:
@@ -88,15 +107,12 @@ def road_aliases(target):
 def road_match_aliases(target):
     if target is None:
         return []
-    base = re.sub(
-        r"\s+(road|rd|street|st)$", "", normalize_text(target.road_name), flags=re.IGNORECASE
-    ).strip()
-    base_key = normalize_key(base)
+    full_key = normalize_key(target.road_name)
     seen = set()
     aliases = []
     for alias in road_aliases(target):
         alias_key = normalize_key(alias)
-        if not alias_key or alias_key == base_key or alias_key in seen:
+        if not alias_key or alias_key == full_key or alias_key in seen:
             continue
         seen.add(alias_key)
         aliases.append(alias)
@@ -111,5 +127,6 @@ def build_research_key(target):
         normalize_key(target.locality),
         normalize_key(target.district),
         normalize_key(target.state),
+        normalize_key(target.pincode),
     ]
     return "|".join(part for part in parts if part)

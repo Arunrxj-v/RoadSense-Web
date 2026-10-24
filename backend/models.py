@@ -226,6 +226,7 @@ class PotholeResearchSource(db.Model):
     selected = db.Column(db.Boolean, nullable=False, default=False)
     text_chars = db.Column(db.Integer)
     error = db.Column(db.String(64))
+    retrieved_at = db.Column(db.DateTime(timezone=True))
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
 
     run = db.relationship("PotholeResearchRun", back_populates="sources")

@@ -193,14 +193,23 @@ site origin, including any path and trailing slash.
 
 ### Automated public-record research
 
-The backend builds deterministic road-level queries from cached road, locality, district, and
-state metadata. The worker searches through the private SearXNG service, fetches a limited
-number of public HTML/PDF pages with SSRF protections and size/time limits, and asks Ollama for
-strict JSON extraction. The backend validates the extracted text, source URL, and road match;
-the model's own confidence is ignored.
+The backend builds deterministic road-level queries from cached road, locality, district,
+state, PIN code, municipality, authority, and administrative-area metadata. Official-domain
+queries are state-aware; there are no hardcoded road names, tender numbers, contractors, or
+pothole-specific aliases. The worker searches through the private SearXNG service, fetches a
+limited number of public HTML/PDF pages with SSRF protections and size/time limits, and asks
+Ollama for strict JSON extraction. The backend validates the extracted text, source URL, road
+match, location context, and authority; the model's own confidence is ignored.
+
+Road matching requires the target road plus locality, district, PIN, municipality, or
+administrative-area context. A generic road base name (for example, “Engineering College”
+from “Engineering College Road”) is accepted only when the source also contains a road term
+and a strong location signal. The same road name in another district is rejected.
 
 Results are cached for `RESEARCH_CACHE_DAYS` and stored in `pothole_research_runs` and
-`pothole_research_sources`, separately from canonical potholes. A result is displayed as:
+`pothole_research_sources`, separately from canonical potholes. Each fetched source stores
+its URL, rank, tier, query, fetch status, text length, and `retrieved_at` timestamp. A result
+is displayed as:
 
 - `high` — a cited government/official source explicitly links the road to a contractor;
 - `medium` — a cited source lists a related work/tender record, including records without a
@@ -223,7 +232,17 @@ curl -X POST http://127.0.0.1:5001/api/v1/internal/potholes/PH-000003/research \
 ```
 
 The browser never calls SearXNG, Ollama, or the internal research endpoints. Public detail
-reads only the latest stored run. Do not bypass CAPTCHAs, paywalls, or provider blocks.
+reads only the latest stored run. The detail page also exposes a public “Research again”
+action:
+
+```http
+POST /api/v1/potholes/PH-000003/research
+```
+
+It returns `202` with a pending run, `429` with `Retry-After` while
+`RESEARCH_REFRESH_COOLDOWN_SECONDS` is active, `409` when road metadata is unresolved, and
+`503` when research is disabled or temporarily unavailable. Failed runs may be retried
+immediately. Do not bypass CAPTCHAs, paywalls, or provider blocks.
 
 ### Home-server API connectivity
 
@@ -283,6 +302,7 @@ origin; do not send the public site over HTTPS while calling an HTTP API.
 | `GET` | `/api/v1/potholes/recent` | Paginated ledger with `q`, `since`, `limit`, `offset` |
 | `GET` | `/api/v1/potholes/nearby` | Potholes within a radius of a coordinate |
 | `GET` | `/api/v1/potholes/<PH-ID>` | Detail payload |
+| `POST` | `/api/v1/potholes/<PH-ID>/research` | Public manual refresh with cooldown |
 | `GET` | `/api/v1/roads/<id>` | Road, linked project, and recent potholes |
 | `GET` | `/api/v1/geocode?pincode=691001` | Server-side PIN code lookup |
 | `POST` | `/api/v1/internal/reports` | Authenticated fleet ingestion |
@@ -361,15 +381,16 @@ to this endpoint is a separate integration step.
 | `PUBLIC_DEFAULT_LIMIT` / `PUBLIC_MAX_LIMIT` | `500` / `2000` | Public read caps |
 | `RESEARCH_ENABLED` | `true` | Enable the research API/worker |
 | `RESEARCH_ADMIN_KEY` | empty | Bearer key for internal research routes; unset disables them |
-| `SEARXNG_URL` | `http://searxng:8080` | Private SearXNG base URL |
+| `SEARCH_ENGINE_URL` | `http://searxng:8080` | Private SearXNG base URL (`SEARXNG_URL` remains a compatibility alias) |
 | `SEARXNG_ENGINES` | `yep` | Comma-separated SearXNG engines used by the provider |
 | `OLLAMA_URL` | `http://ollama:11434` | Private Ollama base URL |
 | `RESEARCH_MODEL` | `qwen3:0.6b` | Local extraction model |
-| `RESEARCH_MAX_QUERIES` | `10` | Deterministic queries per target |
+| `RESEARCH_MAX_QUERIES` | `12` | Dynamic queries per target |
 | `RESEARCH_MAX_FETCHES` | `5` | Maximum pages fetched per run |
 | `RESEARCH_MAX_DURATION_SECONDS` | `180` | Per-run wall-clock budget |
 | `RESEARCH_CACHE_DAYS` | `30` | Reuse a completed result within this window |
 | `RESEARCH_FAILED_RETRY_SECONDS` | `3600` | Retry delay after a failed run |
+| `RESEARCH_REFRESH_COOLDOWN_SECONDS` | `600` | Minimum interval between manual refreshes of a completed run |
 
 ### Frontend
 
@@ -435,7 +456,10 @@ Design files/   Supplied visual references
   may be the only accessible source for some works; those results remain `medium` until a
   government/official source is verified. Official portals that require CAPTCHA are not
   bypassed. The local model can still return invalid JSON on weak source context, which is
-  surfaced as a failed run rather than guessed data.
+  surfaced as a failed run rather than guessed data. Search/fetch/Ollama failures show
+  “Road research temporarily unavailable.”; an empty search shows “No source-backed road work
+  record found.”; a matched record without a contractor says “Not recorded in the cited
+  source.”
 - Android ingestion uses an offline WorkManager queue and has been exercised end to end on a
   physical device, including idempotent replay of an already-synced report. Observations
   without a GPS fix stay local and are marked failed.

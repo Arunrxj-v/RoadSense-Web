@@ -138,6 +138,15 @@ def pothole_summary(pothole):
     }
 
 
+def _research_failure_reason(error):
+    code = (error or "").strip()
+    if code == "time_budget_exceeded":
+        return "Road research took too long. Try again later."
+    if code.startswith("ollama_"):
+        return "Road research could not read the cited source. Try again later."
+    return "Road research temporarily unavailable."
+
+
 def research_public(run):
     if run is None:
         return {
@@ -184,7 +193,7 @@ def research_public(run):
             "source_url": None,
             "source_title": None,
             "evidence": None,
-            "reason": "Research could not be completed. Cached road metadata remains available.",
+            "reason": _research_failure_reason(run.error),
             "researched_at": iso_utc(run.completed_at),
         }
     confidence = run.confidence if run.confidence in {"high", "medium"} else "none"
@@ -251,6 +260,7 @@ def research_debug_payload(run):
                 "selected": source.selected,
                 "text_chars": source.text_chars,
                 "error": source.error,
+                "retrieved_at": iso_utc(source.retrieved_at),
             }
             for source in (run.sources or [])
         ],

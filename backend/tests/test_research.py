@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -26,7 +26,7 @@ from services.research_agent import (
     normalize_url,
     validate_model_result,
 )
-from services.research_target import ResearchTarget, build_target
+from services.research_target import ResearchTarget, build_research_key, build_target
 from services.search_provider import SearchError, SearchHit
 
 
@@ -54,7 +54,7 @@ def source_entry(tier=1, text=None, url="https://pwd.kerala.gov.in/work/1"):
         "text": text
         or (
             "Kerala PWD awarded the resurfacing work on Engineering College Road "
-            "to ABC Constructions Pvt Ltd under tender PWD/2025/12."
+            "in Chengannur to ABC Constructions Pvt Ltd under tender PWD/2025/12."
         ),
     }
 
@@ -71,7 +71,7 @@ def model_result(evidence=None, contractor="ABC Constructions Pvt Ltd"):
         "evidence": evidence
         or (
             "Kerala PWD awarded the resurfacing work on Engineering College Road "
-            "to ABC Constructions Pvt Ltd under tender PWD/2025/12."
+            "in Chengannur to ABC Constructions Pvt Ltd under tender PWD/2025/12."
         ),
         "reason": "Explicit match.",
     }
@@ -102,9 +102,34 @@ def test_generate_queries_are_bounded_and_include_official_domains():
     assert any("site:kerala.gov.in" in query for query in queries)
     assert any("site:pwd.kerala.gov.in" in query for query in queries)
     assert any("contractor" in query for query in queries)
-    assert any("IHRD" in query for query in queries)
-    assert any("Road behind IHRD Engineering College" in query for query in queries)
+    assert any("Chengannur" in query for query in queries)
+    assert any("689121" in query for query in queries)
+    assert all("IHRD" not in query for query in queries)
     assert len({query.casefold() for query in queries}) == len(queries)
+
+
+def test_generate_queries_adapt_to_a_different_road():
+    other = ResearchTarget(
+        pothole_id=2,
+        public_id="PH-000099",
+        road_name="Kannakulangara-Nettiyadu Road",
+        locality="Kollam",
+        district="Kollam",
+        state="Kerala",
+        country="India",
+        pincode="691001",
+        latitude=8.9,
+        longitude=76.6,
+        authority="Kollam Municipal Corporation",
+    )
+    queries = generate_queries(other, 12)
+    joined = " ".join(queries)
+    assert "Kannakulangara-Nettiyadu" in joined
+    assert "Kollam" in joined
+    assert "691001" in joined
+    assert "Kollam Municipal Corporation" in joined
+    assert "Engineering College" not in joined
+    assert "Chengannur" not in joined
 
 
 def test_url_normalization_removes_fragment_and_www():
@@ -188,12 +213,12 @@ def test_validation_rejects_contractor_from_a_different_road():
 
 def test_validation_marks_ambiguous_road_contractor_link_as_medium():
     text = (
-        "Engineering College Road maintenance work was approved. "
+        "Engineering College Road maintenance work in Chengannur was approved. "
         "ABC Constructions Pvt Ltd is listed as a contractor in the same document."
     )
     result = validate_model_result(
         model_result(
-            evidence="Engineering College Road maintenance work was approved."
+            evidence="Engineering College Road maintenance work in Chengannur was approved."
         ),
         target(),
         [source_entry(text=text)],
@@ -217,6 +242,28 @@ def test_road_match_rejects_college_only_alias():
         )
         is True
     )
+
+
+def test_road_match_rejects_same_road_name_in_another_district():
+    assert (
+        _road_mentioned(
+            "Engineering College Road resurfacing work in Thiruvananthapuram.",
+            target(),
+        )
+        is False
+    )
+
+
+def test_validation_clears_authority_not_present_in_source():
+    text = (
+        "A private contractor completed resurfacing work on Engineering College Road "
+        "in Chengannur."
+    )
+    result = model_result(contractor="")
+    result["authority"] = "Kerala PWD"
+    validated = validate_model_result(result, target(), [source_entry(tier=3, text=text)])
+    assert validated["match"] is True
+    assert validated["authority"] is None
 
 
 def test_validation_accepts_tender_work_record_without_contractor():
@@ -351,7 +398,10 @@ def test_execute_research_run_persists_high_confidence_result(app, seeded, monke
         assert run.fetched_source_count == 1
         assert run.selected_source_count == 1
         assert run.ollama_ms is not None
-        assert PotholeResearchSource.query.filter_by(run_id=run.id, selected=True).count() == 1
+        source = PotholeResearchSource.query.filter_by(
+            run_id=run.id, selected=True
+        ).one()
+        assert source.retrieved_at is not None
 
 
 def test_execute_research_run_no_result_is_cached(app, seeded, monkeypatch):
@@ -370,6 +420,7 @@ def test_execute_research_run_no_result_is_cached(app, seeded, monkeypatch):
         assert run.status == "completed"
         assert run.match is False
         assert run.confidence == "none"
+        assert run.reason == "No source-backed road work record found."
         again = enqueue_research(pothole)
         assert again.id == run.id
         assert PotholeResearchRun.query.count() == 1
@@ -418,6 +469,52 @@ def test_public_detail_includes_research_and_enqueues_once(app, client, seeded):
     assert second.status_code == 200
     with app.app_context():
         assert PotholeResearchRun.query.count() == 1
+
+
+def test_public_refresh_enforces_cooldown_then_enqueues(app, client, seeded):
+    app.config["RESEARCH_ENABLED"] = True
+    with app.app_context():
+        pothole = _prepare_pothole(app, seeded)
+        pothole_id = pothole.public_id
+        key = build_research_key(build_target(pothole))
+        run = PotholeResearchRun(
+            canonical_pothole_id=pothole.id,
+            research_key=key,
+            status="completed",
+            match=False,
+            confidence="none",
+            completed_at=datetime.now(timezone.utc),
+        )
+        db.session.add(run)
+        db.session.commit()
+
+    limited = client.post(
+        "/api/v1/potholes/{0}/research".format(pothole_id)
+    )
+    assert limited.status_code == 429
+    assert int(limited.headers["Retry-After"]) > 0
+
+    with app.app_context():
+        run = PotholeResearchRun.query.one()
+        run.completed_at = datetime.now(timezone.utc) - timedelta(seconds=601)
+        db.session.commit()
+
+    refreshed = client.post(
+        "/api/v1/potholes/{0}/research".format(pothole_id)
+    )
+    assert refreshed.status_code == 202
+    assert refreshed.get_json()["research"]["status"] == "pending"
+    with app.app_context():
+        assert PotholeResearchRun.query.count() == 2
+
+
+def test_public_serializer_maps_failed_search_to_unavailable():
+    from services.serializers import research_public
+
+    run = PotholeResearchRun(status="failed", error="search_unreachable")
+    payload = research_public(run)
+    assert payload["status"] == "failed"
+    assert payload["reason"] == "Road research temporarily unavailable."
 
 
 def test_public_serializer_hides_low_confidence_contractor():
