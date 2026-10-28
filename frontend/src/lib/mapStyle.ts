@@ -2,6 +2,7 @@ import type {
   LayerSpecification,
   StyleSpecification,
 } from 'maplibre-gl'
+import type { Theme } from '../theme/theme'
 import type { PotholeFeatureCollection } from './mapData'
 
 type MapProvider = 'maptiler' | 'stadia'
@@ -92,30 +93,108 @@ function firstTextFont(style: StyleSpecification): string[] | undefined {
   return undefined
 }
 
-function softenBasemap(style: StyleSpecification): StyleSpecification {
+interface BasemapPalette {
+  background: string
+  water: string
+  park: string
+  landcoverWood: string
+  landcover: string
+  landuse: string
+  building: string
+  buildingOutline: string
+  buildingOpacity: number
+  boundary: string
+  waterway: string
+  aeroway: string
+  railway: string
+  roadCasing: string
+  motorway: string
+  majorRoad: string
+  minorRoad: string
+  otherRoad: string
+  label: string
+  labelHalo: string
+}
+
+const BASEMAP_PALETTES: Record<Theme, BasemapPalette> = {
+  light: {
+    background: '#f3f1ea',
+    water: '#d7e5e3',
+    park: '#e3ebdf',
+    landcoverWood: '#dfe9db',
+    landcover: '#e9eee5',
+    landuse: '#f0ede5',
+    building: '#e6e1d7',
+    buildingOutline: '#dbdbda',
+    buildingOpacity: 0.55,
+    boundary: '#d7d1c6',
+    waterway: '#d7e5e3',
+    aeroway: '#dddddd',
+    railway: '#d8d2c7',
+    roadCasing: '#faf8f3',
+    motorway: '#dfd2be',
+    majorRoad: '#e8ddcb',
+    minorRoad: '#efe9df',
+    otherRoad: '#f0e9de',
+    label: '#556170',
+    labelHalo: '#f7f5ef',
+  },
+  dark: {
+    background: '#15181d',
+    water: '#1a2b31',
+    park: '#1b2a21',
+    landcoverWood: '#1c2c22',
+    landcover: '#1d2a23',
+    landuse: '#1b1f26',
+    building: '#262b33',
+    buildingOutline: '#3a414b',
+    buildingOpacity: 0.72,
+    boundary: '#3b434e',
+    waterway: '#20363c',
+    aeroway: '#2b3038',
+    railway: '#3a424c',
+    roadCasing: '#0f1216',
+    motorway: '#5c4a33',
+    majorRoad: '#474033',
+    minorRoad: '#272d35',
+    otherRoad: '#303740',
+    label: '#b9c3d0',
+    labelHalo: '#15181d',
+  },
+}
+
+function softenBasemap(
+  style: StyleSpecification,
+  theme: Theme,
+): StyleSpecification {
+  const colors = BASEMAP_PALETTES[theme]
+
   for (const layer of style.layers) {
     const id = layer.id.toLowerCase()
     const sourceLayer =
       'source-layer' in layer ? (layer['source-layer'] || '').toLowerCase() : ''
 
     if (layer.type === 'background') {
-      layer.paint = { ...layer.paint, 'background-color': '#f3f1ea' }
+      layer.paint = { ...layer.paint, 'background-color': colors.background }
       continue
     }
 
     if (layer.type === 'fill') {
       const paint = { ...layer.paint }
       if (sourceLayer === 'water') {
-        paint['fill-color'] = '#d7e5e3'
+        paint['fill-color'] = colors.water
       } else if (sourceLayer === 'park') {
-        paint['fill-color'] = '#e3ebdf'
+        paint['fill-color'] = colors.park
       } else if (sourceLayer === 'landcover') {
-        paint['fill-color'] = id.includes('wood') ? '#dfe9db' : '#e9eee5'
+        paint['fill-color'] = id.includes('wood')
+          ? colors.landcoverWood
+          : colors.landcover
       } else if (sourceLayer === 'landuse') {
-        paint['fill-color'] = '#f0ede5'
+        paint['fill-color'] = colors.landuse
       } else if (sourceLayer === 'building') {
-        paint['fill-color'] = '#e6e1d7'
-        paint['fill-opacity'] = 0.55
+        paint['fill-color'] = colors.building
+        paint['fill-outline-color'] = colors.buildingOutline
+        paint['fill-opacity'] = colors.buildingOpacity
       }
       layer.paint = paint
       continue
@@ -124,22 +203,24 @@ function softenBasemap(style: StyleSpecification): StyleSpecification {
     if (layer.type === 'line') {
       const paint = { ...layer.paint }
       if (sourceLayer === 'boundary') {
-        paint['line-color'] = '#d7d1c6'
+        paint['line-color'] = colors.boundary
       } else if (sourceLayer === 'waterway') {
-        paint['line-color'] = '#d7e5e3'
+        paint['line-color'] = colors.waterway
+      } else if (sourceLayer === 'aeroway') {
+        paint['line-color'] = colors.aeroway
       } else if (sourceLayer === 'railway') {
-        paint['line-color'] = '#d8d2c7'
+        paint['line-color'] = colors.railway
       } else if (sourceLayer === 'transportation') {
         if (id.includes('casing')) {
-          paint['line-color'] = '#faf8f3'
+          paint['line-color'] = colors.roadCasing
         } else if (id.includes('motorway')) {
-          paint['line-color'] = '#dfd2be'
+          paint['line-color'] = colors.motorway
         } else if (id.includes('major')) {
-          paint['line-color'] = '#e8ddcb'
+          paint['line-color'] = colors.majorRoad
         } else if (id.includes('path') || id.includes('service')) {
-          paint['line-color'] = '#efe9df'
+          paint['line-color'] = colors.minorRoad
         } else {
-          paint['line-color'] = '#f0e9de'
+          paint['line-color'] = colors.otherRoad
         }
       }
       layer.paint = paint
@@ -153,8 +234,8 @@ function softenBasemap(style: StyleSpecification): StyleSpecification {
       }
       layer.paint = {
         ...layer.paint,
-        'text-color': '#556170',
-        'text-halo-color': '#f7f5ef',
+        'text-color': colors.label,
+        'text-halo-color': colors.labelHalo,
         'text-halo-width': 1.3,
       }
     }
@@ -162,7 +243,7 @@ function softenBasemap(style: StyleSpecification): StyleSpecification {
   return style
 }
 
-function createFallbackStyle(): StyleSpecification {
+function createFallbackStyle(theme: Theme): StyleSpecification {
   return {
     version: 8,
     name: 'RoadSense fallback',
@@ -171,7 +252,7 @@ function createFallbackStyle(): StyleSpecification {
       {
         id: 'roadsense-background',
         type: 'background',
-        paint: { 'background-color': '#f3f1ea' },
+        paint: { 'background-color': BASEMAP_PALETTES[theme].background },
       },
     ],
   }
@@ -283,10 +364,13 @@ export function withPotholeLayers(
   }
 }
 
-export async function loadMapStyle(signal?: AbortSignal): Promise<LoadedMapStyle> {
+export async function loadMapStyle(
+  theme: Theme,
+  signal?: AbortSignal,
+): Promise<LoadedMapStyle> {
   const config = resolveConfig()
   const fallback = (): LoadedMapStyle => ({
-    style: createFallbackStyle(),
+    style: createFallbackStyle(theme),
     basemapAvailable: false,
     message: BASEMAP_ERROR_MESSAGE,
   })
@@ -321,7 +405,7 @@ export async function loadMapStyle(signal?: AbortSignal): Promise<LoadedMapStyle
     }
 
     return {
-      style: softenBasemap(parsed),
+      style: softenBasemap(parsed, theme),
       basemapAvailable: true,
       message: null,
     }

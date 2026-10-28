@@ -1,9 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#faf9f5" />
+    <script>
+      (function () {
+        try {
+          var stored = window.localStorage.getItem('roadsense-theme')
+          var theme = stored === 'dark' || stored === 'light' ? stored : 'light'
+          var root = document.documentElement
+          root.dataset.theme = theme
+          root.style.colorScheme = theme
+          var themeColor = document.querySelector('meta[name="theme-color"]')
+          if (themeColor) {
+            themeColor.setAttribute('content', theme === 'dark' ? '#111318' : '#faf9f5')
+          }
+        } catch (error) {
+          document.documentElement.dataset.theme = 'light'
+        }
+      })()
+    </script>
     <title>RoadSense — Public road condition map</title>
     <meta
       name="description"

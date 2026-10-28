@@ -7,6 +7,7 @@ import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './styles/global.css'
 import { App } from './App'
+import { ThemeProvider } from './theme/ThemeProvider'
 
 setWorkerUrl(maplibreWorkerUrl)
 
@@ -22,9 +23,11 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename="/roadsense">
-        <App />
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter basename="/roadsense">
+          <App />
+        </BrowserRouter>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
 )
