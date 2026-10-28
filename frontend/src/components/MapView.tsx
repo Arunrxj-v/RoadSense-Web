@@ -16,6 +16,8 @@ import {
   POTHOLE_SOURCE_ID,
   withPotholeLayers,
 } from '../lib/mapStyle'
+import { useTheme } from '../theme/ThemeContext'
+import type { Theme } from '../theme/theme'
 import type { MapViewport, PotholeSummary } from '../lib/types'
 
 export interface FlyTarget {
@@ -75,6 +77,7 @@ export function MapView({
   onViewportChange,
   onBasemapError,
 }: MapViewProps) {
+  const { theme } = useTheme()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const selectedMarkerRef = useRef<Marker | null>(null)
@@ -83,6 +86,8 @@ export function MapView({
   const onSelectRef = useRef(onSelect)
   const onViewportRef = useRef(onViewportChange)
   const onBasemapErrorRef = useRef(onBasemapError)
+  const themeRef = useRef<Theme>(theme)
+  const loadedThemeRef = useRef<Theme | null>(null)
   const [mapReady, setMapReady] = useState(false)
 
   dataRef.current = potholes
@@ -90,6 +95,7 @@ export function MapView({
   onSelectRef.current = onSelect
   onViewportRef.current = onViewportChange
   onBasemapErrorRef.current = onBasemapError
+  themeRef.current = theme
 
   useEffect(() => {
     const container = containerRef.current
@@ -99,13 +105,15 @@ export function MapView({
     let disposed = false
 
     const init = async () => {
+      const loadTheme = themeRef.current
       let loaded
       try {
-        loaded = await loadMapStyle(controller.signal)
+        loaded = await loadMapStyle(loadTheme, controller.signal)
       } catch {
         return
       }
       if (disposed || !containerRef.current) return
+      loadedThemeRef.current = loadTheme
 
       let basemapErrorReported = !loaded.basemapAvailable
       if (!loaded.basemapAvailable) {
@@ -251,6 +259,7 @@ export function MapView({
     return () => {
       disposed = true
       controller.abort()
+      loadedThemeRef.current = null
       setMapReady(false)
       selectedMarkerRef.current?.remove()
       selectedMarkerRef.current = null
@@ -263,6 +272,44 @@ export function MapView({
     initialCenter.zoom,
     mapApiRef,
   ])
+
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || loadedThemeRef.current === theme) return
+
+    const map = mapRef.current
+    const controller = new AbortController()
+    let disposed = false
+
+    const updateStyle = async () => {
+      try {
+        const loaded = await loadMapStyle(theme, controller.signal)
+        if (disposed || mapRef.current !== map) return
+        loadedThemeRef.current = theme
+        if (!loaded.basemapAvailable) {
+          onBasemapErrorRef.current(loaded.message ?? BASEMAP_ERROR_MESSAGE)
+        }
+        map.setStyle(
+          withPotholeLayers(
+            loaded.style,
+            canonicalPotholesToGeoJSON(dataRef.current),
+          ),
+          { diff: false },
+        )
+        map.once('style.load', () => {
+          if (mapRef.current === map) setSourceData(map, dataRef.current)
+        })
+      } catch {
+        return
+      }
+    }
+
+    void updateStyle()
+
+    return () => {
+      disposed = true
+      controller.abort()
+    }
+  }, [mapReady, theme])
 
   useEffect(() => {
     dataRef.current = potholes

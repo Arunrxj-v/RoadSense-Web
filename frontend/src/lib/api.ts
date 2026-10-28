@@ -109,6 +109,15 @@ export async function fetchPothole(
   return apiFetch<PotholeDetail>(`/potholes/${encodeURIComponent(id)}`, {}, signal)
 }
 
+export async function refreshPotholeResearch(
+  id: string,
+): Promise<{ pothole_id: string; research: PotholeDetail['research'] }> {
+  return apiFetch<{ pothole_id: string; research: PotholeDetail['research'] }>(
+    `/potholes/${encodeURIComponent(id)}/research`,
+    { method: 'POST' },
+  )
+}
+
 export async function fetchNearby(
   latitude: number,
   longitude: number,

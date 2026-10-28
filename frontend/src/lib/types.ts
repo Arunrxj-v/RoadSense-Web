@@ -65,9 +65,29 @@ export interface PotholeSummary {
   location?: PotholeLocation | null
 }
 
+export type ResearchStatus = 'none' | 'pending' | 'running' | 'completed' | 'failed' | string
+export type ResearchConfidence = 'high' | 'medium' | 'low' | 'none' | string
+
+export interface ContractResearch {
+  status: ResearchStatus
+  match: boolean | null
+  confidence: ResearchConfidence
+  contractor: string | null
+  work_title: string | null
+  authority: string | null
+  tender_number: string | null
+  work_reference: string | null
+  source_url: string | null
+  source_title: string | null
+  evidence: string | null
+  reason: string | null
+  researched_at: string | null
+}
+
 export interface PotholeDetail extends Omit<PotholeSummary, 'road'> {
   road: RoadDetail | null
   project: Project | null
+  research: ContractResearch
   related: PotholeSummary[]
 }
 

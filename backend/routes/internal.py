@@ -10,12 +10,14 @@ from datetime import datetime, timedelta, timezone
 from flask import Blueprint, current_app, jsonify, request
 
 from db import db
-from models import CanonicalPothole, DetectionReport
+from models import CanonicalPothole, DetectionReport, parse_public_id
 from services.location_enrichment import (
     enqueue_pothole_enrichment,
     ensure_metadata,
 )
-from services.serializers import iso_utc
+from services.research_agent import enqueue_research, latest_research_run
+from services.research_target import build_target
+from services.serializers import iso_utc, research_debug_payload
 from services.spatial import find_canonical_near, match_road
 
 internal_api = Blueprint("internal_api", __name__)
@@ -27,6 +29,17 @@ def error(message, status=400):
 
 def _authorized():
     configured = current_app.config.get("INGEST_API_KEY")
+    if not configured:
+        return False
+    header = request.headers.get("Authorization", "")
+    token = header[7:].strip() if header.lower().startswith("bearer ") else ""
+    return bool(token) and hmac.compare_digest(token, configured)
+
+
+def _research_authorized():
+    configured = current_app.config.get("RESEARCH_ADMIN_KEY") or current_app.config.get(
+        "INGEST_API_KEY"
+    )
     if not configured:
         return False
     header = request.headers.get("Authorization", "")
@@ -196,4 +209,52 @@ def ingest_report():
             }
         ),
         201 if created else 200,
+    )
+
+
+@internal_api.post("/internal/potholes/<pothole_id>/research")
+def enqueue_pothole_research(pothole_id):
+    if not current_app.config.get("RESEARCH_ENABLED"):
+        return error("Research is not enabled.", 503)
+    if not _research_authorized():
+        return error("Not authorised.", 401)
+    numeric_id = parse_public_id(pothole_id)
+    if numeric_id is None:
+        return error("That pothole identifier is not valid.", 404)
+    pothole = db.session.get(CanonicalPothole, numeric_id)
+    if pothole is None:
+        return error("That pothole could not be found.", 404)
+    if build_target(pothole) is None:
+        return error("This pothole does not have enough location metadata for research.")
+    payload = request.get_json(silent=True) or {}
+    run = enqueue_research(pothole, force=bool(payload.get("force")))
+    if run is None:
+        return error("Research could not be enqueued.")
+    return (
+        jsonify(
+            {
+                "pothole_id": pothole.public_id,
+                "research": research_debug_payload(run),
+            }
+        ),
+        202 if run.status == "pending" else 200,
+    )
+
+
+@internal_api.get("/internal/potholes/<pothole_id>/research")
+def get_pothole_research(pothole_id):
+    if not _research_authorized():
+        return error("Not authorised.", 401)
+    numeric_id = parse_public_id(pothole_id)
+    if numeric_id is None:
+        return error("That pothole identifier is not valid.", 404)
+    pothole = db.session.get(CanonicalPothole, numeric_id)
+    if pothole is None:
+        return error("That pothole could not be found.", 404)
+    run = latest_research_run(pothole)
+    return jsonify(
+        {
+            "pothole_id": pothole.public_id,
+            "research": research_debug_payload(run),
+        }
     )

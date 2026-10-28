@@ -54,6 +54,7 @@ POSTGIS_STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS idx_canonical_potholes_last_detected ON canonical_potholes (last_detected_at DESC)",
     "CREATE INDEX IF NOT EXISTS idx_canonical_potholes_road ON canonical_potholes (road_id)",
     "CREATE INDEX IF NOT EXISTS idx_detection_reports_canonical ON detection_reports (canonical_pothole_id, observed_at DESC)",
+    "ALTER TABLE pothole_research_sources ADD COLUMN IF NOT EXISTS retrieved_at TIMESTAMPTZ",
 ]
 
 
@@ -61,6 +62,8 @@ def init_database(app):
     from models import (  # noqa: F401
         DetectionReport,
         PotholeLocationMetadata,
+        PotholeResearchRun,
+        PotholeResearchSource,
         RoadProject,
         RoadSegment,
     )

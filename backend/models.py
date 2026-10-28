@@ -93,6 +93,12 @@ class CanonicalPothole(db.Model):
         cascade="all, delete-orphan",
         lazy="joined",
     )
+    research_runs = db.relationship(
+        "PotholeResearchRun",
+        back_populates="pothole",
+        cascade="all, delete-orphan",
+        lazy="noload",
+    )
 
     @property
     def public_id(self):
@@ -145,6 +151,85 @@ class PotholeLocationMetadata(db.Model):
     )
 
     pothole = db.relationship("CanonicalPothole", back_populates="location_metadata")
+
+
+class PotholeResearchRun(db.Model):
+    __tablename__ = "pothole_research_runs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    canonical_pothole_id = db.Column(
+        db.Integer,
+        db.ForeignKey("canonical_potholes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    research_key = db.Column(db.String(512), index=True)
+    status = db.Column(db.String(16), nullable=False, default="pending", index=True)
+    match = db.Column(db.Boolean)
+    confidence = db.Column(db.String(16))
+    contractor = db.Column(db.String(255))
+    work_title = db.Column(db.String(512))
+    authority = db.Column(db.String(255))
+    tender_number = db.Column(db.String(128))
+    work_reference = db.Column(db.String(128))
+    source_url = db.Column(db.String(1024))
+    source_title = db.Column(db.String(512))
+    evidence = db.Column(db.Text)
+    reason = db.Column(db.String(512))
+    model = db.Column(db.String(128))
+    queries_json = db.Column(db.JSON)
+    query_count = db.Column(db.Integer, nullable=False, default=0)
+    result_count = db.Column(db.Integer, nullable=False, default=0)
+    fetched_source_count = db.Column(db.Integer, nullable=False, default=0)
+    selected_source_count = db.Column(db.Integer, nullable=False, default=0)
+    search_ms = db.Column(db.Integer)
+    fetch_ms = db.Column(db.Integer)
+    ollama_ms = db.Column(db.Integer)
+    total_ms = db.Column(db.Integer)
+    error = db.Column(db.String(64))
+    reused_from_run_id = db.Column(db.Integer, db.ForeignKey("pothole_research_runs.id"))
+    started_at = db.Column(db.DateTime(timezone=True))
+    completed_at = db.Column(db.DateTime(timezone=True), index=True)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    updated_at = db.Column(
+        db.DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow
+    )
+
+    pothole = db.relationship("CanonicalPothole", back_populates="research_runs")
+    sources = db.relationship(
+        "PotholeResearchSource",
+        back_populates="run",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+
+class PotholeResearchSource(db.Model):
+    __tablename__ = "pothole_research_sources"
+
+    id = db.Column(db.Integer, primary_key=True)
+    run_id = db.Column(
+        db.Integer,
+        db.ForeignKey("pothole_research_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    search_query = db.Column(db.String(512))
+    rank = db.Column(db.Integer)
+    title = db.Column(db.String(512))
+    url = db.Column(db.String(1024))
+    domain = db.Column(db.String(255))
+    tier = db.Column(db.Integer)
+    snippet = db.Column(db.Text)
+    fetch_status = db.Column(db.String(32))
+    fetched = db.Column(db.Boolean, nullable=False, default=False)
+    selected = db.Column(db.Boolean, nullable=False, default=False)
+    text_chars = db.Column(db.Integer)
+    error = db.Column(db.String(64))
+    retrieved_at = db.Column(db.DateTime(timezone=True))
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+
+    run = db.relationship("PotholeResearchRun", back_populates="sources")
 
 
 class DetectionReport(db.Model):

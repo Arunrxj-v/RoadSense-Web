@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router-dom'
 import { useApiMeta } from '../hooks/useServerData'
 import { relativeTime } from '../lib/format'
+import { useTheme } from '../theme/ThemeContext'
 import { Icon } from './Icon'
 
 interface AppHeaderProps {
@@ -14,6 +15,7 @@ const navItems = [
 ] as const
 
 export function AppHeader({ active }: AppHeaderProps) {
+  const { theme, toggleTheme } = useTheme()
   const meta = useApiMeta()
   const latest = meta.data?.latest_detection_at ?? null
   const feedLabel = meta.isError
@@ -21,6 +23,8 @@ export function AppHeader({ active }: AppHeaderProps) {
     : meta.isLoading
       ? 'Checking feed'
       : relativeTime(latest)
+  const nextTheme = theme === 'light' ? 'dark' : 'light'
+  const toggleLabel = `Switch to ${nextTheme} mode`
 
   return (
     <header className="app-header">
@@ -50,13 +54,25 @@ export function AppHeader({ active }: AppHeaderProps) {
           ))}
         </nav>
 
-        <div className="feed-status" title={meta.isError ? 'The API feed is unavailable' : 'Latest recorded observation'}>
-          <span
-            className={`feed-status__dot${latest && !meta.isError ? ' feed-status__dot--live' : ''}`}
-            aria-hidden="true"
-          />
-          <span>{feedLabel}</span>
-          {meta.isLoading ? <Icon name="progress_activity" size={12} className="feed-spinner" /> : null}
+        <div className="header-actions">
+          <div className="feed-status" title={meta.isError ? 'The API feed is unavailable' : 'Latest recorded observation'}>
+            <span
+              className={`feed-status__dot${latest && !meta.isError ? ' feed-status__dot--live' : ''}`}
+              aria-hidden="true"
+            />
+            <span>{feedLabel}</span>
+            {meta.isLoading ? <Icon name="progress_activity" size={12} className="feed-spinner" /> : null}
+          </div>
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={toggleLabel}
+            aria-pressed={theme === 'dark'}
+            title={toggleLabel}
+          >
+            <Icon name={theme === 'light' ? 'dark_mode' : 'light_mode'} size={18} />
+          </button>
         </div>
       </div>
     </header>

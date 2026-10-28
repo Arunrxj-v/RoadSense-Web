@@ -15,12 +15,15 @@ from models import (
     parse_public_id,
 )
 from services import geocoding
+from services.research_agent import enqueue_research, latest_research_run
+from services.research_target import build_target
 from services.serializers import (
     iso_utc,
     meta_payload,
     pothole_detail,
     pothole_summary,
     project_public,
+    research_public,
     road_detail,
 )
 from services.spatial import (
@@ -315,6 +318,14 @@ def get_pothole(pothole_id):
     if not pothole:
         return error("That pothole could not be found.", 404)
 
+    try:
+        enqueue_research(pothole)
+    except Exception:
+        current_app.logger.exception(
+            "Could not enqueue research for pothole %s", pothole.public_id
+        )
+    research = latest_research_run(pothole)
+
     related = []
     if pothole.road_id:
         related = (
@@ -326,7 +337,75 @@ def get_pothole(pothole_id):
             .limit(4)
             .all()
         )
-    return jsonify(pothole_detail(pothole, related))
+    return jsonify(pothole_detail(pothole, related, research))
+
+
+@public_api.post("/potholes/<pothole_id>/research")
+def refresh_pothole_research(pothole_id):
+    if not current_app.config.get("RESEARCH_ENABLED"):
+        return error("Road research temporarily unavailable.", 503)
+    numeric_id = parse_public_id(pothole_id)
+    if numeric_id is None:
+        return error("That pothole identifier is not valid.", 404)
+    pothole = CanonicalPothole.query.options(
+        joinedload(CanonicalPothole.road)
+    ).filter(CanonicalPothole.id == numeric_id).first()
+    if not pothole:
+        return error("That pothole could not be found.", 404)
+    if build_target(pothole) is None:
+        return error(
+            "Road research needs a resolved road name for this pothole.", 409
+        )
+
+    latest = latest_research_run(pothole)
+    if latest and latest.status in {"pending", "running"}:
+        return (
+            jsonify(
+                {
+                    "pothole_id": pothole.public_id,
+                    "research": research_public(latest),
+                }
+            ),
+            202,
+        )
+    if latest and latest.status == "completed":
+        completed_at = latest.completed_at or latest.created_at
+        if completed_at is not None:
+            if completed_at.tzinfo is None:
+                completed_at = completed_at.replace(tzinfo=timezone.utc)
+            cooldown = current_app.config.get(
+                "RESEARCH_REFRESH_COOLDOWN_SECONDS", 600
+            )
+            remaining = cooldown - (
+                datetime.now(timezone.utc) - completed_at
+            ).total_seconds()
+            if remaining > 0:
+                response = jsonify(
+                    {
+                        "error": {
+                            "message": (
+                                "Road research was refreshed recently. "
+                                "Try again later."
+                            ),
+                            "status": 429,
+                        }
+                    }
+                )
+                response.headers["Retry-After"] = str(int(remaining))
+                return response, 429
+
+    run = enqueue_research(pothole, force=True)
+    if run is None:
+        return error("Road research temporarily unavailable.", 503)
+    return (
+        jsonify(
+            {
+                "pothole_id": pothole.public_id,
+                "research": research_public(run),
+            }
+        ),
+        202,
+    )
 
 
 @public_api.get("/roads/<int:road_id>")

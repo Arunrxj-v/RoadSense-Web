@@ -97,6 +97,64 @@ CREATE TABLE IF NOT EXISTS pothole_location_metadata (
 CREATE INDEX IF NOT EXISTS idx_pothole_location_metadata_status ON pothole_location_metadata (status);
 CREATE INDEX IF NOT EXISTS idx_pothole_location_metadata_next_retry ON pothole_location_metadata (next_retry_at);
 
+CREATE TABLE IF NOT EXISTS pothole_research_runs (
+  id SERIAL PRIMARY KEY,
+  canonical_pothole_id INTEGER NOT NULL REFERENCES canonical_potholes(id) ON DELETE CASCADE,
+  research_key VARCHAR(512),
+  status VARCHAR(16) NOT NULL DEFAULT 'pending',
+  match BOOLEAN,
+  confidence VARCHAR(16),
+  contractor VARCHAR(255),
+  work_title VARCHAR(512),
+  authority VARCHAR(255),
+  tender_number VARCHAR(128),
+  work_reference VARCHAR(128),
+  source_url VARCHAR(1024),
+  source_title VARCHAR(512),
+  evidence TEXT,
+  reason VARCHAR(512),
+  model VARCHAR(128),
+  queries_json JSONB,
+  query_count INTEGER NOT NULL DEFAULT 0,
+  result_count INTEGER NOT NULL DEFAULT 0,
+  fetched_source_count INTEGER NOT NULL DEFAULT 0,
+  selected_source_count INTEGER NOT NULL DEFAULT 0,
+  search_ms INTEGER,
+  fetch_ms INTEGER,
+  ollama_ms INTEGER,
+  total_ms INTEGER,
+  error VARCHAR(64),
+  reused_from_run_id INTEGER REFERENCES pothole_research_runs(id),
+  started_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS pothole_research_sources (
+  id SERIAL PRIMARY KEY,
+  run_id INTEGER NOT NULL REFERENCES pothole_research_runs(id) ON DELETE CASCADE,
+  search_query VARCHAR(512),
+  rank INTEGER,
+  title VARCHAR(512),
+  url VARCHAR(1024),
+  domain VARCHAR(255),
+  tier INTEGER,
+  snippet TEXT,
+  fetch_status VARCHAR(32),
+  fetched BOOLEAN NOT NULL DEFAULT false,
+  selected BOOLEAN NOT NULL DEFAULT false,
+  text_chars INTEGER,
+  error VARCHAR(64),
+  retrieved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pothole_research_runs_pothole ON pothole_research_runs (canonical_pothole_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pothole_research_runs_key ON pothole_research_runs (research_key, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pothole_research_runs_status ON pothole_research_runs (status);
+CREATE INDEX IF NOT EXISTS idx_pothole_research_sources_run ON pothole_research_sources (run_id);
+
 CREATE INDEX IF NOT EXISTS idx_road_segments_geom ON road_segments USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_canonical_potholes_geom ON canonical_potholes USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_canonical_potholes_geog ON canonical_potholes USING GIST (geog);

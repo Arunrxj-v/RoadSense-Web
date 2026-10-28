@@ -3,7 +3,8 @@
 A map-first civic website for exploring potholes recorded by RoadSense road-monitoring
 vehicles. The app shows **canonical potholes only** — repeated vehicle observations are
 deduplicated server-side before publication — and preserves provenance for linked road and
-public-works records.
+public-works records. A self-hosted research worker uses SearXNG and a small local Ollama
+model to look for public tender/work-order evidence for each road.
 
 ## What is included
 
@@ -14,6 +15,9 @@ public-works records.
   layout.
 - **Pothole detail** page with cached reverse-geocoded address/road metadata, confidence,
   observation history summary, a micro-location inset, and source-backed contract records.
+- **Automated public-record research** with deterministic search queries, SSRF-safe fetching,
+  strict JSON extraction, cached results, and explicit `high`/`medium`/`low` confidence.
+  Only a `high` result is shown as a verified contractor.
 - **About** and **Public Data Note** pages.
 - **Read-only public API** with an authenticated ingestion endpoint for fleet observations.
 - **PostgreSQL/PostGIS production path** with real geometry, geography, GiST indexes, and sync
@@ -32,9 +36,13 @@ Flask API ── deduplication ──► PostgreSQL + PostGIS
         │                         detection_reports
         │                         road_segments / road_projects
         │                         pothole_location_metadata (cached reverse geocoding)
+        │                         pothole_research_runs / pothole_research_sources
         │  GET /api/v1/*  (read-only)
         ▼
 React + Vite public site ── MapLibre GL JS / React Query
+        │
+        └── research worker ──► SearXNG ──► public web/PDF
+                              └► Ollama (qwen3:0.6b, extraction only)
         │
         ├── MapTiler Streets vector tiles (Stadia fallback)
         ├── server-side MapTiler reverse geocoding for pothole addresses
@@ -122,15 +130,17 @@ npm run build
 
 The backend suite covers bbox filtering, nearby queries, pagination/search, detail and road
 endpoints, PIN code validation/geocoding, reverse-geocoding parsing/caching, read-only
-behaviour, ingestion authentication, deduplication, and contractor provenance rules. Test
-fixtures are synthetic and never loaded into a production database.
+behaviour, ingestion authentication, deduplication, contractor provenance rules, research
+query generation, road-alias matching, source selection/ranking, and strict result validation.
+Test fixtures are synthetic and never loaded into a production database.
 
 ## Docker Compose (PostGIS)
 
 ```bash
 cp .env.example .env
-# Edit POSTGRES_PASSWORD, INGEST_API_KEY, MAPTILER_API_KEY, and
-# MAPTILER_REFERER (when the key is origin-restricted).
+# Edit POSTGRES_PASSWORD, INGEST_API_KEY, MAPTILER_API_KEY,
+# MAPTILER_REFERER (when the key is origin-restricted), SEARXNG_SECRET,
+# and RESEARCH_ADMIN_KEY.
 docker compose up --build
 ```
 
@@ -142,6 +152,11 @@ Open http://localhost:8091. Services:
 - `frontend` — nginx on port 80, published as `WEB_PORT`; the app is served under
   `/roadsense/`, and nginx proxies `/api/` to `API_ORIGIN` (default `backend:5000`). Set
   `API_ORIGIN` to the deployed HTTPS root when the local website should read fleet data.
+- `searxng` — private metasearch service used only by the backend/worker. The default
+  deployment uses the `yep` engine; CAPTCHAs and provider blocks are not bypassed.
+- `ollama` / `ollama-init` — private local model runtime and one-time
+  `qwen3:0.6b` pull. The model extracts structured facts; it does not browse the web.
+- `research-worker` — DB-backed queue worker for asynchronous road research.
 
 The API is also available directly on the home server at
 `http://100.104.179.69:5001/api/v1/*` for the Android app and diagnostics. Bind the API
@@ -175,6 +190,59 @@ docker compose exec backend flask --app wsgi:app enrich-locations --force
 Public reads only use cached metadata; they never call the provider. `MAPTILER_API_KEY` is
 server-side only. If the key is origin-restricted, set `MAPTILER_REFERER` to the exact allowed
 site origin, including any path and trailing slash.
+
+### Automated public-record research
+
+The backend builds deterministic road-level queries from cached road, locality, district,
+state, PIN code, municipality, authority, and administrative-area metadata. Official-domain
+queries are state-aware; there are no hardcoded road names, tender numbers, contractors, or
+pothole-specific aliases. The worker searches through the private SearXNG service, fetches a
+limited number of public HTML/PDF pages with SSRF protections and size/time limits, and asks
+Ollama for strict JSON extraction. The backend validates the extracted text, source URL, road
+match, location context, and authority; the model's own confidence is ignored.
+
+Road matching requires the target road plus locality, district, PIN, municipality, or
+administrative-area context. A generic road base name (for example, “Engineering College”
+from “Engineering College Road”) is accepted only when the source also contains a road term
+and a strong location signal. The same road name in another district is rejected.
+
+Results are cached for `RESEARCH_CACHE_DAYS` and stored in `pothole_research_runs` and
+`pothole_research_sources`, separately from canonical potholes. Each fetched source stores
+its URL, rank, tier, query, fetch status, text length, and `retrieved_at` timestamp. A result
+is displayed as:
+
+- `high` — a cited government/official source explicitly links the road to a contractor;
+- `medium` — a cited source lists a related work/tender record, including records without a
+  contractor; the UI says to verify the official record;
+- `low` — no contractor is displayed.
+
+Run one target synchronously:
+
+```bash
+docker compose exec backend flask --app wsgi:app research-pothole PH-000003 --force
+```
+
+Or enqueue it for the worker (requires `RESEARCH_ADMIN_KEY`):
+
+```bash
+curl -X POST http://127.0.0.1:5001/api/v1/internal/potholes/PH-000003/research \
+  -H "Authorization: Bearer $RESEARCH_ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"force": true}'
+```
+
+The browser never calls SearXNG, Ollama, or the internal research endpoints. Public detail
+reads only the latest stored run. The detail page also exposes a public “Research again”
+action:
+
+```http
+POST /api/v1/potholes/PH-000003/research
+```
+
+It returns `202` with a pending run, `429` with `Retry-After` while
+`RESEARCH_REFRESH_COOLDOWN_SECONDS` is active, `409` when road metadata is unresolved, and
+`503` when research is disabled or temporarily unavailable. Failed runs may be retried
+immediately. Do not bypass CAPTCHAs, paywalls, or provider blocks.
 
 ### Home-server API connectivity
 
@@ -234,9 +302,12 @@ origin; do not send the public site over HTTPS while calling an HTTP API.
 | `GET` | `/api/v1/potholes/recent` | Paginated ledger with `q`, `since`, `limit`, `offset` |
 | `GET` | `/api/v1/potholes/nearby` | Potholes within a radius of a coordinate |
 | `GET` | `/api/v1/potholes/<PH-ID>` | Detail payload |
+| `POST` | `/api/v1/potholes/<PH-ID>/research` | Public manual refresh with cooldown |
 | `GET` | `/api/v1/roads/<id>` | Road, linked project, and recent potholes |
 | `GET` | `/api/v1/geocode?pincode=691001` | Server-side PIN code lookup |
 | `POST` | `/api/v1/internal/reports` | Authenticated fleet ingestion |
+| `POST` | `/api/v1/internal/potholes/<PH-ID>/research` | Enqueue research (`RESEARCH_ADMIN_KEY`) |
+| `GET` | `/api/v1/internal/potholes/<PH-ID>/research` | Inspect latest research run (`RESEARCH_ADMIN_KEY`) |
 
 Bounding boxes use `min_lng,min_lat,max_lng,max_lat`. Public reads are capped by
 `PUBLIC_MAX_LIMIT`; the map requests at most 2,000 recent canonical records once and applies
@@ -277,6 +348,9 @@ to this endpoint is a separate integration step.
 - **Provenance-aware contractor display**: a contractor name is shown only when the linked
   project has `verification_status` of `verified` or `unverified`. A record marked `verified`
   without a source is downgraded to `unknown`.
+- **Research confidence is server-computed**: `high` requires a cited official source that
+  explicitly links the road and contractor. Tender aggregators can support a `medium` related
+  work record but never a verified contractor; general websites are not sufficient evidence.
 - **No false negatives**: absence of a marker means the road may not have been surveyed, not
   that it is defect-free.
 - **PIN search** goes through the API rather than the browser, so the geocoder user agent and
@@ -305,6 +379,18 @@ to this endpoint is a separate integration step.
 | `REVERSE_GEOCODING_MAX_ATTEMPTS` | `6` | Stop retrying after this many failed attempts |
 | `REVERSE_GEOCODING_NO_RESULT_RETRY_SECONDS` | `604800` | Retry interval when the provider returns no match |
 | `PUBLIC_DEFAULT_LIMIT` / `PUBLIC_MAX_LIMIT` | `500` / `2000` | Public read caps |
+| `RESEARCH_ENABLED` | `true` | Enable the research API/worker |
+| `RESEARCH_ADMIN_KEY` | empty | Bearer key for internal research routes; unset disables them |
+| `SEARCH_ENGINE_URL` | `http://searxng:8080` | Private SearXNG base URL (`SEARXNG_URL` remains a compatibility alias) |
+| `SEARXNG_ENGINES` | `yep` | Comma-separated SearXNG engines used by the provider |
+| `OLLAMA_URL` | `http://ollama:11434` | Private Ollama base URL |
+| `RESEARCH_MODEL` | `qwen3:0.6b` | Local extraction model |
+| `RESEARCH_MAX_QUERIES` | `12` | Dynamic queries per target |
+| `RESEARCH_MAX_FETCHES` | `5` | Maximum pages fetched per run |
+| `RESEARCH_MAX_DURATION_SECONDS` | `180` | Per-run wall-clock budget |
+| `RESEARCH_CACHE_DAYS` | `30` | Reuse a completed result within this window |
+| `RESEARCH_FAILED_RETRY_SECONDS` | `3600` | Retry delay after a failed run |
+| `RESEARCH_REFRESH_COOLDOWN_SECONDS` | `600` | Minimum interval between manual refreshes of a completed run |
 
 ### Frontend
 
@@ -366,6 +452,14 @@ Design files/   Supplied visual references
   rewritten, and missing provider fields remain “Not recorded”.
 - An origin-restricted MapTiler key needs `MAPTILER_REFERER`; a server key without origin
   restrictions is preferred.
+- Automated research is best-effort and depends on public search coverage. Tender aggregators
+  may be the only accessible source for some works; those results remain `medium` until a
+  government/official source is verified. Official portals that require CAPTCHA are not
+  bypassed. The local model can still return invalid JSON on weak source context, which is
+  surfaced as a failed run rather than guessed data. Search/fetch/Ollama failures show
+  “Road research temporarily unavailable.”; an empty search shows “No source-backed road work
+  record found.”; a matched record without a contractor says “Not recorded in the cited
+  source.”
 - Android ingestion uses an offline WorkManager queue and has been exercised end to end on a
   physical device, including idempotent replay of an already-synced report. Observations
   without a GPS fix stay local and are marked failed.

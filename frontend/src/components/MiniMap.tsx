@@ -6,6 +6,7 @@ import {
   NavigationControl,
 } from 'maplibre-gl'
 import { loadMapStyle } from '../lib/mapStyle'
+import { useTheme } from '../theme/ThemeContext'
 
 interface MiniMapProps {
   latitude: number
@@ -14,6 +15,7 @@ interface MiniMapProps {
 }
 
 export function MiniMap({ latitude, longitude, label }: MiniMapProps) {
+  const { theme } = useTheme()
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const [basemapUnavailable, setBasemapUnavailable] = useState(false)
 
@@ -21,6 +23,7 @@ export function MiniMap({ latitude, longitude, label }: MiniMapProps) {
     const container = mapContainerRef.current
     if (!container) return
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return
+    setBasemapUnavailable(false)
 
     const controller = new AbortController()
     let disposed = false
@@ -31,7 +34,7 @@ export function MiniMap({ latitude, longitude, label }: MiniMapProps) {
     const init = async () => {
       let loaded
       try {
-        loaded = await loadMapStyle(controller.signal)
+        loaded = await loadMapStyle(theme, controller.signal)
       } catch {
         return
       }
@@ -91,7 +94,7 @@ export function MiniMap({ latitude, longitude, label }: MiniMapProps) {
       resizeObserver?.disconnect()
       map?.remove()
     }
-  }, [latitude, longitude])
+  }, [latitude, longitude, theme])
 
   return (
     <div className="inset-map__canvas" aria-label={`Map showing ${label}`}>

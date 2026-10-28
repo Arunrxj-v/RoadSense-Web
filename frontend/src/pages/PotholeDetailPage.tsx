@@ -6,7 +6,7 @@ import { Icon } from '../components/Icon'
 import { MiniMap } from '../components/MiniMap'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import { usePotholeDetail } from '../hooks/useServerData'
-import { apiErrorMessage, potholePath } from '../lib/api'
+import { apiErrorMessage, potholePath, refreshPotholeResearch } from '../lib/api'
 import {
   bearingLabel,
   confidencePercent,
@@ -17,9 +17,10 @@ import {
   formatDistance,
   formatTimeIST,
   locationTitle,
-  potholeRoadPrimaryLabel,
   projectReference,
   projectYear,
+  researchPresentation,
+  researchReference,
   roadPrimaryLabel,
   severityLabel,
   statusLabel,
@@ -31,6 +32,8 @@ export function PotholeDetailPage() {
   const detail = usePotholeDetail(id || null)
   const pothole = detail.data
   const [copied, setCopied] = useState(false)
+  const [refreshBusy, setRefreshBusy] = useState(false)
+  const [refreshError, setRefreshError] = useState('')
 
   useDocumentMeta({
     title: pothole
@@ -40,6 +43,20 @@ export function PotholeDetailPage() {
       ? `Public road condition record ${pothole.id} at ${locationTitle(pothole)}, with ${pothole.report_count} observations.`
       : 'Public road condition record from RoadSense.',
   })
+
+  const refreshResearch = async () => {
+    if (!pothole || refreshBusy) return
+    setRefreshBusy(true)
+    setRefreshError('')
+    try {
+      await refreshPotholeResearch(pothole.id)
+      await detail.refetch()
+    } catch (error) {
+      setRefreshError(apiErrorMessage(error))
+    } finally {
+      setRefreshBusy(false)
+    }
+  }
 
   const copyCoordinates = async () => {
     if (!pothole) return
@@ -116,13 +133,20 @@ export function PotholeDetailPage() {
   const road = pothole.road
   const locationMetadata = pothole.location
   const project = pothole.project
+  const research = pothole.research
   const verification = verificationPresentation(project)
+  const researchView = researchPresentation(research)
+  const researchActive = research?.status === 'pending' || research?.status === 'running'
+  const researchMatched = Boolean(
+    research?.match && (research.confidence === 'high' || research.confidence === 'medium'),
+  )
+  const contractView = researchMatched || researchActive || !project ? researchView : verification
   const location = locationTitle(pothole)
   const resolving = locationMetadata?.status === 'pending'
-  const roadLabel = potholeRoadPrimaryLabel(pothole)
+  const roadName = locationMetadata?.road_name || road?.name || ''
+  const roadLabel = roadName || (resolving ? 'Resolving…' : 'Road information unavailable')
   const subtitleParts = [
-    roadLabel !== 'Road information unavailable' ? roadLabel : null,
-    locationMetadata?.classification || road?.classification,
+    roadName || null,
     locationMetadata?.locality || road?.locality,
     locationMetadata?.state,
   ].filter(Boolean)
@@ -222,18 +246,6 @@ export function PotholeDetailPage() {
                       </dd>
                     </div>
                     <div className="meta-row">
-                      <dt>Road number</dt>
-                      <dd className={['mono', resolvingClass(locationMetadata?.road_number, road?.number)].filter(Boolean).join(' ') || undefined}>
-                        {displayValue(locationMetadata?.road_number, road?.number)}
-                      </dd>
-                    </div>
-                    <div className="meta-row">
-                      <dt>Corridor classification</dt>
-                      <dd className={resolvingClass(locationMetadata?.classification, road?.classification)}>
-                        {displayValue(locationMetadata?.classification, road?.classification)}
-                      </dd>
-                    </div>
-                    <div className="meta-row">
                       <dt>Locality</dt>
                       <dd className={resolvingClass(locationMetadata?.locality, road?.locality)}>
                         {displayValue(locationMetadata?.locality, road?.locality)}
@@ -295,9 +307,9 @@ export function PotholeDetailPage() {
                         This is a canonical pothole formed by deduplicating repeated vehicle
                         observations server-side. Address and road metadata are resolved from the
                         canonical GPS coordinates using {locationMetadata?.attribution || 'map data'}.
-                        Fields the provider does not return remain “Not recorded”; road class,
-                        route number and authority are never inferred. Contractor values come only
-                        from a linked source-backed work record.
+                        Fields the provider does not return remain “Not recorded”; contractor values
+                        come only from a linked source-backed work record or an explicit automated
+                        research result, never from inference.
                       </p>
                     </div>
                   </div>
@@ -343,16 +355,113 @@ export function PotholeDetailPage() {
               </div>
             </div>
 
-            <section className={`card detail-section contract-section contract-section--${verification.tone}`}>
+            <section className={`card detail-section contract-section contract-section--${contractView.tone}`}>
               <div className="detail-section__head">
                 <div>
                   <h2>Road work &amp; contract record</h2>
-                  <p>Public work records linked through the road segment, with source provenance preserved.</p>
+                  <p>Public work records found through cited government and official sources.</p>
                 </div>
-                <span className={`chip chip--${verification.tone}`}>{verification.label}</span>
+                <div className="contract-head-actions">
+                  <span className={`chip chip--${contractView.tone}`}>{contractView.label}</span>
+                  {research && research.status !== 'none' ? (
+                    <button
+                      type="button"
+                      className="button button--secondary button--compact"
+                      onClick={() => void refreshResearch()}
+                      disabled={refreshBusy || researchActive}
+                    >
+                      <Icon name="refresh" size={16} />
+                      {researchActive ? 'Researching…' : refreshBusy ? 'Starting…' : 'Research again'}
+                    </button>
+                  ) : null}
+                </div>
               </div>
 
-              {project ? (
+              {refreshError ? (
+                <p className="research-refresh-error" role="alert">{refreshError}</p>
+              ) : null}
+
+              {researchActive ? (
+                <div className="contract-unavailable research-pending">
+                  <Icon name="search" size={20} />
+                  <div>
+                    <h3>Research pending</h3>
+                    <p>
+                      RoadSense is checking public government and official records in the
+                      background. This page updates automatically when the search finishes.
+                    </p>
+                  </div>
+                </div>
+              ) : researchMatched ? (
+                <>
+                  <div className="contract-meta">
+                    <div className="contract-field">
+                      <span className="contract-field__label">
+                        {research.confidence === 'high'
+                          ? 'Verified contractor'
+                          : research.contractor
+                            ? 'Possible contractor'
+                            : 'Contractor'}
+                      </span>
+                      <p className="contract-field__value">
+                        {research.contractor || 'Not recorded in the cited source'}
+                      </p>
+                    </div>
+                    <div className="contract-field">
+                      <span className="contract-field__label">Project / work name</span>
+                      <p className="contract-field__value">{research.work_title || 'Not recorded'}</p>
+                    </div>
+                    <div className="contract-field">
+                      <span className="contract-field__label">Tender / reference</span>
+                      <p className="contract-field__value contract-field__value--mono">
+                        {researchReference(research)}
+                      </p>
+                    </div>
+                    <div className="contract-field">
+                      <span className="contract-field__label">Authority</span>
+                      <p className="contract-field__value">
+                        {research.authority || locationMetadata?.authority || road?.authority || 'Not recorded'}
+                      </p>
+                    </div>
+                    <div className="contract-field">
+                      <span className="contract-field__label">Match confidence</span>
+                      <p className="contract-field__value">
+                        {research.confidence === 'high' ? 'Verified source match' : 'Possible match — review source'}
+                      </p>
+                    </div>
+                    <div className="contract-field">
+                      <span className="contract-field__label">Researched</span>
+                      <p className="contract-field__value contract-field__value--mono">
+                        {research.researched_at ? formatDateIST(research.researched_at) : 'Not recorded'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {research.evidence ? (
+                    <div className="research-evidence">
+                      <span className="contract-field__label">Evidence excerpt</span>
+                      <blockquote>{research.evidence}</blockquote>
+                    </div>
+                  ) : null}
+
+                  <div className="contract-provenance">
+                    {research.source_url ? (
+                      <a
+                        className="inline-link inline-link--primary"
+                        href={research.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View source
+                        <Icon name="open_in_new" size={14} />
+                      </a>
+                    ) : (
+                      <span className="chip chip--unknown">Source unavailable</span>
+                    )}
+                    <p className="contract-provenance__note">{contractView.detail}</p>
+                  </div>
+                </>
+              ) : project ? (
                 <>
                   <div className="contract-meta">
                     <div className="contract-field">
@@ -392,7 +501,7 @@ export function PotholeDetailPage() {
                         rel="noopener noreferrer"
                       >
                         <Icon name="open_in_new" size={14} />
-                        {project.source_name || 'Public source record'}
+                        View source
                       </a>
                     ) : (
                       <span className="chip chip--unknown">No source URL recorded</span>
@@ -402,13 +511,18 @@ export function PotholeDetailPage() {
                 </>
               ) : (
                 <div className="contract-unavailable">
-                  <Icon name="link_off" size={20} />
+                  <Icon name={research?.status === 'failed' ? 'cloud_off' : 'link_off'} size={20} />
                   <div>
-                    <h3>Contractor information not available</h3>
+                    <h3>
+                      {research?.status === 'failed'
+                        ? 'Research temporarily unavailable'
+                        : 'No verified contractor record found'}
+                    </h3>
                     <p>
-                      No source-backed public works record is linked to this road segment. RoadSense
-                      does not infer a contractor from the pothole's location or from a similar road
-                      name. This panel will populate when a verified work record is linked.
+                      {research?.status === 'none'
+                        ? 'This pothole does not have enough resolved road metadata for automated research. RoadSense does not infer a contractor from the pothole location or from a similar road name.'
+                        : research?.reason ||
+                          'No source-backed public works record was found. RoadSense does not infer a contractor from the pothole location or from a similar road name.'}
                     </p>
                   </div>
                 </div>
